@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>APHOLOS · Control de Calidad</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,sans-serif;color:#111;background:#f4f3ef;font-size:13px;line-height:1.5;}
+.app{max-width:960px;margin:0 auto;padding:16px 16px 60px;}
+/* HEADER */
+.hdr{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #ddd;margin-bottom:14px;}
+.logo{width:30px;height:30px;background:#111;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo svg{width:17px;height:17px;}
+.logo-name{font-size:15px;font-weight:600;letter-spacing:.3px;}
+.logo-sub{font-size:10px;color:#888;}
+.lang{margin-left:auto;display:flex;border:1px solid #ccc;border-radius:20px;overflow:hidden;}
+.lang button{padding:3px 10px;font-size:11px;font-weight:500;cursor:pointer;border:none;background:none;color:#888;}
+.lang button.on{background:#111;color:#fff;}
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid #ddd;margin-bottom:14px;gap:0;overflow-x:auto;}
+.tab{padding:8px 15px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:none;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;}
+.tab.on{color:#111;border-bottom-color:#111;}
+.tab:hover:not(.on){color:#111;}
+.pnl{display:none;}.pnl.on{display:block;}
+/* CARDS */
+.card{background:#fff;border:1px solid #e0ddd8;border-radius:10px;padding:13px;margin-bottom:10px;}
+.ct{font-size:12px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.ct i{font-size:14px;color:#888;}
+.dvd{height:1px;background:#ece9e3;margin:10px 0;}
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.col{display:flex;flex-direction:column;gap:3px;}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+/* FORM */
+.lbl{font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:3px;}
+input[type=text],input[type=number],input[type=date],input[type=password],select,textarea{
+  font-size:12px;padding:6px 9px;border:1px solid #ccc;border-radius:7px;
+  background:#fff;color:#111;width:100%;font-family:inherit;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#111;}
+textarea{resize:vertical;min-height:52px;}
+input[type=range]{width:100%;accent-color:#111;cursor:pointer;}
+input[type=checkbox]{width:14px;height:14px;accent-color:#111;cursor:pointer;flex-shrink:0;}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;font-size:12px;font-weight:500;border-radius:7px;border:1px solid #ccc;background:#fff;color:#111;cursor:pointer;white-space:nowrap;font-family:inherit;}
+.btn:hover{background:#f0ede8;}
+.btn.pri{background:#111;color:#fff;border-color:#111;}
+.btn.pri:hover{opacity:.87;}
+.btn.xs{padding:3px 9px;font-size:11px;}
+/* BADGES */
+.bdg{font-size:10px;font-weight:500;padding:1px 8px;border-radius:20px;white-space:nowrap;}
+.b-blue{background:#e6f1fb;color:#0c3d7a;}
+.b-green{background:#eaf3de;color:#275010;}
+.b-amber{background:#fdf4e3;color:#7a4f00;}
+.b-red{background:#fdf0ec;color:#c8391a;}
+/* INFO */
+.info{border-radius:7px;padding:8px 12px;margin-bottom:10px;font-size:11px;display:flex;align-items:flex-start;gap:7px;}
+.info i{font-size:13px;margin-top:1px;flex-shrink:0;}
+.info-g{background:#eaf3de;border:1px solid #c0dd97;color:#275010;}
+.info-b{background:#e6f1fb;border:1px solid #b0cded;color:#0c3d7a;}
+.info-a{background:#fdf4e3;border:1px solid #f0d08a;color:#7a4f00;}
+/* API BOX */
+.api-box{background:#fdf4e3;border:1px solid #f0d08a;border-radius:10px;padding:12px;margin-bottom:14px;}
+.api-box.ok{background:#eaf3de;border-color:#c0dd97;}
+.api-ttl{font-size:12px;font-weight:600;color:#7a4f00;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.api-box.ok .api-ttl{color:#275010;}
+.api-hint{font-size:11px;color:#7a4f00;margin-bottom:8px;}
+.api-box.ok .api-hint{color:#275010;}
+.api-row{display:flex;gap:6px;align-items:center;}
+.api-row input{flex:1;font-size:12px;padding:6px 9px;border:1px solid #f0d08a;border-radius:7px;background:#fff;color:#111;font-family:inherit;}
+.api-box.ok .api-row input{border-color:#c0dd97;}
+/* DROP ZONES */
+.dz-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.dz-wrap{background:#fff;border:1px solid #e0ddd8;border-radius:10px;padding:10px;}
+.dz-head{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.dz-head .t{font-size:12px;font-weight:600;}.dz-head .s{font-size:10px;color:#888;}
+.dz{border:1.5px dashed #ccc;border-radius:7px;height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative;overflow:hidden;background:#f8f7f4;cursor:pointer;transition:border-color .15s,background .15s;}
+.dz:hover{border-color:#888;background:#f0ede8;}
+.dz.az{border-color:#378add;background:#e6f1fb;border-style:solid;}
+.dz.drag-over{border-color:#378add;background:#dce8f7;}
+.dz.filled{border-style:solid;border-color:#ccc;}
+.dz i.ico{font-size:22px;color:#bbb;}
+.dz .hint{font-size:10px;color:#aaa;text-align:center;}
+.dz .hint kbd{background:#fff;border:1px solid #ddd;border-radius:3px;padding:0 3px;font-size:9px;font-family:monospace;}
+.dz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:1;}
+.dz img.prev{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:7px;z-index:2;}
+.dz .itag{position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,.5);color:#fff;font-size:9px;padding:1px 7px;border-radius:20px;z-index:3;}
+.dz .clr{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.4);color:#fff;border:none;border-radius:20px;font-size:10px;padding:2px 8px;cursor:pointer;z-index:4;font-family:inherit;}
+.dz .clr:hover{background:rgba(180,0,0,.75);}
+.paste-hint{font-size:10px;color:#888;margin-top:6px;min-height:14px;}
+/* COMPARE */
+.cmp-layout{display:grid;grid-template-columns:1fr 240px;gap:12px;align-items:start;}
+.ov-box{background:#e8e5df;border-radius:10px;overflow:hidden;width:100%;aspect-ratio:1/1;position:relative;border:1px solid #ddd;}
+.ov-box canvas{display:block;width:100%;height:100%;}
+.ov-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#aaa;font-size:12px;}
+.ov-empty i{font-size:26px;}
+.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:7px;}
+.th-box{background:#e8e5df;border-radius:6px;aspect-ratio:1/1;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid #ddd;}
+.th-box img{width:100%;height:100%;object-fit:contain;}
+.th-lbl{font-size:9px;color:#888;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* SIDEBAR */
+.sb{display:flex;flex-direction:column;gap:8px;}
+.sb-block{background:#fff;border:1px solid #e0ddd8;border-radius:10px;padding:10px;max-height:70vh;overflow-y:auto;}
+.sb-ttl{font-size:11px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+.sb-ttl i{font-size:13px;color:#888;}
+/* LAYER ROW */
+.lr{display:flex;align-items:center;gap:6px;padding:5px 7px;background:#f8f7f4;border:1px solid #e8e5df;border-radius:7px;margin-bottom:4px;}
+.lr.off{opacity:.4;}
+.lr-th{width:26px;height:26px;border-radius:4px;overflow:hidden;background:#e8e5df;flex-shrink:0;}
+.lr-th img{width:100%;height:100%;object-fit:cover;}
+.lr-name{font-size:11px;font-weight:600;flex:1;}
+.lr-tag{font-size:9px;color:#888;}
+.tog{width:24px;height:14px;border-radius:20px;background:#ccc;position:relative;flex-shrink:0;cursor:pointer;transition:background .2s;}
+.tog.on{background:#111;}
+.tog::after{content:'';position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#fff;transition:transform .2s;}
+.tog.on::after{transform:translateX(10px);}
+/* LAYER CONTROLS */
+.lrc{background:#f4f2ed;border:1px solid #e8e5df;border-radius:7px;padding:8px;margin-bottom:5px;}
+.sl-row{display:grid;grid-template-columns:50px 1fr 32px;gap:4px;align-items:center;margin-bottom:4px;}
+.sl-lbl{font-size:10px;color:#888;}
+.sl-val{font-size:10px;font-weight:600;text-align:right;}
+.brow{display:flex;align-items:center;gap:5px;margin-bottom:4px;}
+.brow label{font-size:10px;color:#888;white-space:nowrap;}
+.brow select{font-size:11px;padding:2px 5px;border:1px solid #ccc;border-radius:5px;flex:1;background:#fff;color:#111;font-family:inherit;}
+.qb{display:flex;flex-wrap:wrap;gap:2px;margin:3px 0;}
+.qb button{font-size:10px;padding:2px 7px;border:1px solid #ccc;border-radius:5px;background:#fff;cursor:pointer;color:#111;font-family:inherit;}
+.qb button:hover{background:#f0ede8;}
+.tx-ttl{font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.3px;margin:6px 0 4px;border-top:1px solid #e8e5df;padding-top:6px;}
+/* PILLS */
+.pill{padding:5px 12px;font-size:11px;font-weight:500;border-radius:20px;border:1px solid #ccc;background:#fff;color:#888;cursor:pointer;transition:all .15s;font-family:inherit;}
+.pill.on{background:#111;color:#fff;border-color:#111;}
+/* METRICS */
+.metric{background:#f0ede8;border-radius:8px;padding:10px 12px;border:1px solid #e0ddd8;}
+.metric .lbl{font-size:10px;color:#888;margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px;}
+.metric .val{font-size:18px;font-weight:600;}
+.metric .sub{font-size:10px;color:#aaa;margin-top:1px;}
+/* CHECKLIST */
+.chk{display:flex;align-items:center;gap:7px;padding:7px 10px;background:#fff;border:1px solid #e0ddd8;border-radius:7px;font-size:12px;}
+/* AI BOX */
+.ai-box{background:#fff;border:1px solid #e0ddd8;border-radius:10px;padding:13px;margin-bottom:10px;}
+.ai-hd{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+.ai-hd .ai-tag{margin-left:auto;background:#e6f1fb;color:#0c3d7a;font-size:9px;padding:2px 8px;border-radius:20px;}
+.ai-body{font-size:12px;color:#555;line-height:1.65;}
+/* VERDICT */
+.verd{border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-top:10px;border:1px solid;}
+.v-ok{background:#eaf3de;border-color:#c0dd97;}.v-ok i,.v-ok .vt,.v-ok .vs{color:#275010;}
+.v-warn{background:#fdf4e3;border-color:#f0d08a;}.v-warn i,.v-warn .vt,.v-warn .vs{color:#7a4f00;}
+.v-err{background:#fdf0ec;border-color:#f2c4b5;}.v-err i,.v-err .vt,.v-err .vs{color:#c8391a;}
+.vt{font-size:13px;font-weight:600;}.vs{font-size:11px;opacity:.8;}
+/* DIM TABLE */
+.dim-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px;}
+.dim-tbl th{font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.3px;padding:6px 8px;border-bottom:1px solid #e0ddd8;background:#f8f7f4;text-align:left;}
+.dim-tbl td{padding:6px 8px;border-bottom:1px solid #f0ede8;vertical-align:middle;}
+.dim-tbl tr:last-child td{border-bottom:none;}
+.dim-tbl input{width:100%;font-size:12px;padding:4px 6px;border:1px solid #ccc;border-radius:4px;background:#fff;color:#111;font-family:inherit;}
+.s-ok{color:#275010;font-weight:600;font-size:11px;}
+.s-warn{color:#7a4f00;font-weight:600;font-size:11px;}
+.s-fail{color:#c8391a;font-weight:600;font-size:11px;}
+.s-na{color:#bbb;font-size:11px;}
+/* FINISH */
+.fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.fin-card{background:#f8f7f4;border:1px solid #e0ddd8;border-radius:8px;padding:10px;}
+.fin-label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;cursor:pointer;margin-bottom:6px;}
+/* REPORT */
+.rp-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;padding-bottom:12px;border-bottom:2px solid #111;}
+.rp-logo{width:30px;height:30px;background:#111;border-radius:6px;display:flex;align-items:center;justify-content:center;}
+.rp-logo svg{width:17px;height:17px;}
+.rp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #e0ddd8;border-radius:8px;overflow:hidden;margin-bottom:10px;}
+.rp-cell{padding:8px 11px;}.rp-cell+.rp-cell{border-left:1px solid #e0ddd8;}.rp-cell2{border-top:1px solid #e0ddd8;}
+.rp-k{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.3px;margin-bottom:1px;}
+.rp-v{font-size:12px;font-weight:600;}
+.rp-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0ede8;font-size:12px;}
+.rp-row:last-child{border:none;}.rp-row .k{color:#888;}.rp-row .v{font-weight:600;}
+/* TOAST */
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(50px);background:#111;color:#fff;font-size:11px;padding:7px 16px;border-radius:20px;opacity:0;transition:all .25s;pointer-events:none;z-index:9999;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.dots::after{content:'';animation:dt 1.2s steps(3,end) infinite;}
+@keyframes dt{0%{content:'.';}33%{content:'..';}66%{content:'...';}100%{content:'';}}
+/* PRINT */
+@media print{
+  body{background:#fff;}
+  .api-box,.tabs,.no-print{display:none!important;}
+  #p-upload,#p-compare,#p-dim,#p-finish,#p-analysis{display:none!important;}
+  #p-report{display:block!important;}
+  .card{border:1px solid #ccc;break-inside:avoid;}
+  .rp-logo{background:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="app">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2L2 7l10 5 10-5-10-5M2 17l10 5 10-5M2 12l10 5 10-5"/>
+    </svg>
+  </div>
+  <div>
+    <div class="logo-name">APHOLOS</div>
+    <div class="logo-sub" id="hdr-sub">Control de Calidad</div>
+  </div>
+  <div class="lang">
+    <button class="on" onclick="setLang('es',this)">ES</button>
+    <button onclick="setLang('en',this)">EN</button>
+  </div>
+</div>
+
+<!-- API KEY -->
+<div class="api-box" id="api-box">
+  <div class="api-ttl"><i class="ti ti-key"></i><span id="t-api-ttl">API Key de Anthropic (para análisis IA)</span></div>
+  <div class="api-hint" id="t-api-hint">Se guarda en tu navegador. Obtené la tuya en console.anthropic.com → API Keys</div>
+  <div class="api-row">
+    <input type="password" id="api-inp" placeholder="sk-ant-api03-..."/>
+    <button class="btn xs" onclick="saveKey()" style="white-space:nowrap;" id="t-api-save">Guardar</button>
+    <button class="btn xs" onclick="clearKey()" id="t-api-clear">Quitar</button>
+  </div>
+  <div style="font-size:10px;margin-top:5px;" id="api-status">Sin API key guardada</div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab on" onclick="go('upload',this)" id="tab-upload">Imágenes</button>
+  <button class="tab" onclick="go('compare',this)" id="tab-compare">Comparar</button>
+  <button class="tab" onclick="go('dim',this)" id="tab-dim">Dimensional</button>
+  <button class="tab" onclick="go('finish',this)" id="tab-finish">Acabados</button>
+  <button class="tab" onclick="go('analysis',this)" id="tab-analysis">Análisis IA</button>
+  <button class="tab" onclick="go('report',this)" id="tab-report">Reporte</button>
+</div>
+
+<!-- ══ UPLOAD ══ -->
+<div id="p-upload" class="pnl on">
+  <div class="card">
+    <div class="ct"><i class="ti ti-building"></i><span id="t-record">Datos del registro</span></div>
+    <div class="g3">
+      <div class="col"><span class="lbl" id="l-marca">Marca</span><input type="text" id="f-marca" placeholder="Starbucks"/></div>
+      <div class="col"><span class="lbl" id="l-cliente">Cliente</span><input type="text" id="f-cliente" placeholder="Distribuidora Pérez"/></div>
+      <div class="col"><span class="lbl" id="l-molde">N° molde</span><input type="text" id="f-molde" placeholder="MOL-0042"/></div>
+    </div>
+    <div class="dvd"></div>
+    <div class="g3">
+      <div class="col"><span class="lbl" id="l-op">N° orden</span><input type="text" id="f-op" placeholder="OP-2026-0118"/></div>
+      <div class="col"><span class="lbl" id="l-ref">Referencia</span><input type="text" id="f-ref" placeholder="INS-ZAM-001"/></div>
+      <div class="col"><span class="lbl" id="l-desc">Descripción</span><input type="text" id="f-desc" placeholder="Insignia sirena zamak"/></div>
+    </div>
+    <div class="dvd"></div>
+    <div class="g3">
+      <div class="col"><span class="lbl" id="l-fecha">Fecha</span><input type="date" id="f-fecha"/></div>
+      <div class="col"><span class="lbl" id="l-insp">Inspector</span><input type="text" id="f-inspector" placeholder="Nombre y apellido"/></div>
+      <div class="col"><span class="lbl" id="l-fase">Fase</span>
+        <select id="f-fase">
+          <option value="pre" id="o-pre">Pre-producción</option>
+          <option value="post" id="o-post">Post-producción</option>
+          <option value="both" id="o-both">Ambas fases</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="info info-g">
+    <i class="ti ti-info-circle"></i>
+    <span id="t-hint">Hacé <strong>clic en una zona</strong> para seleccionarla (se pone azul) y luego pegá con <kbd style="background:#fff;border:1px solid #c0dd97;border-radius:3px;padding:0 4px;font-size:10px;">Ctrl+V</kbd>. También podés subir archivo o arrastrar. El molde es opcional.</span>
+  </div>
+
+  <div class="dz-grid">
+    <div class="dz-wrap">
+      <div class="dz-head">
+        <i class="ti ti-vector-bezier-2" style="font-size:14px;color:#888;"></i>
+        <div><div class="t" id="l-dz-design">Diseño 2D</div><div class="s" id="l-dz-design-s">Arte original</div></div>
+        <span class="bdg b-blue" style="margin-left:auto;" id="l-dz-design-b">Referencia</span>
+      </div>
+      <div class="dz" id="dz-design" ondragover="odo(event,this)" ondragleave="odl(this)" ondrop="odp(event,'design',false)" onclick="selZone('design')">
+        <input type="file" accept="image/*" onchange="lf(event,'design',false)" onclick="event.stopPropagation()"/>
+        <i class="ico ti ti-file-vector"></i>
+        <div class="hint">Clic · drag · <kbd>Ctrl+V</kbd></div>
+      </div>
+    </div>
+    <div class="dz-wrap">
+      <div class="dz-head">
+        <i class="ti ti-flip-horizontal" style="font-size:14px;color:#888;"></i>
+        <div><div class="t" id="l-dz-mold">Foto de molde</div><div class="s" id="l-dz-mold-s">Espejado auto · opcional</div></div>
+        <span class="bdg b-amber" style="margin-left:auto;" id="l-dz-mold-b">Opcional</span>
+      </div>
+      <div class="dz" id="dz-mold" ondragover="odo(event,this)" ondragleave="odl(this)" ondrop="odp(event,'mold',true)" onclick="selZone('mold')">
+        <input type="file" accept="image/*" onchange="lf(event,'mold',true)" onclick="event.stopPropagation()"/>
+        <i class="ico ti ti-device-imac"></i>
+        <div class="hint">Clic · drag · <kbd>Ctrl+V</kbd></div>
+      </div>
+    </div>
+    <div class="dz-wrap">
+      <div class="dz-head">
+        <i class="ti ti-box" style="font-size:14px;color:#888;"></i>
+        <div><div class="t" id="l-dz-injected">Producto inyectado</div><div class="s" id="l-dz-injected-s">Pieza cruda</div></div>
+        <span class="bdg b-amber" style="margin-left:auto;">Pre-prod</span>
+      </div>
+      <div class="dz" id="dz-injected" ondragover="odo(event,this)" ondragleave="odl(this)" ondrop="odp(event,'injected',false)" onclick="selZone('injected')">
+        <input type="file" accept="image/*" onchange="lf(event,'injected',false)" onclick="event.stopPropagation()"/>
+        <i class="ico ti ti-package"></i>
+        <div class="hint">Clic · drag · <kbd>Ctrl+V</kbd></div>
+      </div>
+    </div>
+    <div class="dz-wrap">
+      <div class="dz-head">
+        <i class="ti ti-star" style="font-size:14px;color:#888;"></i>
+        <div><div class="t" id="l-dz-final">Producto final</div><div class="s" id="l-dz-final-s">Terminado / acabado</div></div>
+        <span class="bdg b-green" style="margin-left:auto;">Post-prod</span>
+      </div>
+      <div class="dz" id="dz-final" ondragover="odo(event,this)" ondragleave="odl(this)" ondrop="odp(event,'final',false)" onclick="selZone('final')">
+        <input type="file" accept="image/*" onchange="lf(event,'final',false)" onclick="event.stopPropagation()"/>
+        <i class="ico ti ti-award"></i>
+        <div class="hint">Clic · drag · <kbd>Ctrl+V</kbd></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="paste-hint" id="paste-hint">Zona activa: ninguna — hacé clic en una zona para seleccionarla</div>
+
+  <div class="row" style="margin-top:8px;">
+    <button class="btn pri" onclick="go('compare',document.getElementById('tab-compare'))"><i class="ti ti-layers-intersect"></i><span id="t-go-cmp">Ver comparación ↗</span></button>
+    <button class="btn" onclick="clearAll()"><i class="ti ti-trash"></i><span id="t-clear">Limpiar todo</span></button>
+  </div>
+</div>
+
+<!-- ══ COMPARE ══ -->
+<div id="p-compare" class="pnl">
+  <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center;flex-wrap:wrap;">
+    <button class="pill on" id="pill-pre" onclick="setPhase('pre',this)">Pre-producción</button>
+    <button class="pill" id="pill-post" onclick="setPhase('post',this)">Post-producción</button>
+    <button class="btn xs" style="margin-left:auto;" onclick="expOv()"><i class="ti ti-download"></i><span id="t-exp">Exportar overlay</span></button>
+  </div>
+  <div class="cmp-layout">
+    <div>
+      <div style="font-size:11px;font-weight:600;color:#888;margin-bottom:6px;letter-spacing:.5px;" id="t-ov-ttl">OVERLAY MULTICAPA</div>
+      <div class="ov-box">
+        <canvas id="ov-canvas" width="600" height="600"></canvas>
+        <div class="ov-empty" id="ov-empty"><i class="ti ti-layers-intersect"></i><span id="t-ov-empty">Cargá imágenes para ver el overlay</span></div>
+      </div>
+      <div class="thumbs">
+        <div><div class="th-lbl" id="th-l-design">Diseño 2D</div><div class="th-box" id="th-design"></div></div>
+        <div><div class="th-lbl" id="th-l-mold">Molde</div><div class="th-box" id="th-mold"></div></div>
+        <div><div class="th-lbl" id="th-l-injected">Inyectado</div><div class="th-box" id="th-injected"></div></div>
+        <div><div class="th-lbl" id="th-l-final">Final</div><div class="th-box" id="th-final"></div></div>
+      </div>
+    </div>
+    <div class="sb">
+      <div class="sb-block">
+        <div class="sb-ttl"><i class="ti ti-stack-2"></i><span id="t-layers">Capas — activar y ajustar</span></div>
+        <div id="layer-list"></div>
+      </div>
+      <button class="btn pri" style="justify-content:center;" onclick="go('analysis',document.getElementById('tab-analysis'))"><i class="ti ti-brain"></i><span id="t-go-ai">Analizar con IA ↗</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DIMENSIONAL ══ -->
+<div id="p-dim" class="pnl">
+  <div class="card">
+    <div class="ct"><i class="ti ti-ruler"></i><span id="t-dim-ttl">Control dimensional</span></div>
+    <div class="info info-b" style="margin-bottom:10px;"><i class="ti ti-info-circle"></i><span id="t-dim-hint">Tolerancia estándar: ±0.3 mm (ingeniería). Ingresá nominal y medido con calibre.</span></div>
+    <table class="dim-tbl">
+      <thead>
+        <tr>
+          <th>#</th><th id="th-desc">Descripción</th><th id="th-nom">Nominal (mm)</th>
+          <th id="th-tol">Tol. ±</th><th id="th-med">Medido (mm)</th>
+          <th id="th-dev">Desvío</th><th id="th-sta">Estado</th>
+        </tr>
+      </thead>
+      <tbody id="dim-body"></tbody>
+    </table>
+    <div class="row">
+      <button class="btn xs" onclick="calcDim()"><i class="ti ti-calculator"></i><span id="t-calc">Calcular desvíos</span></button>
+      <button class="btn xs" onclick="clearDim()"><i class="ti ti-eraser"></i><span id="t-clr-dim">Limpiar</span></button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct"><i class="ti ti-camera"></i><span id="t-caliper-ttl">Foto con calibre (opcional)</span></div>
+    <div class="dz" id="dz-caliper" style="height:120px;" ondragover="odo(event,this)" ondragleave="odl(this)" ondrop="odp(event,'caliper',false)" onclick="selZone('caliper')">
+      <input type="file" accept="image/*" onchange="lf(event,'caliper',false)" onclick="event.stopPropagation()"/>
+      <i class="ico ti ti-camera"></i>
+      <div class="hint" id="t-caliper-hint">Foto con calibre visible · Clic · drag · <kbd>Ctrl+V</kbd></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FINISH ══ -->
+<div id="p-finish" class="pnl">
+  <div class="card">
+    <div class="ct"><i class="ti ti-palette"></i><span id="t-fin-ttl">Control de acabados</span></div>
+    <div style="font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px;" id="t-fin-type">Tipo de acabado</div>
+    <div class="fin-grid" style="margin-bottom:12px;">
+      <div class="fin-card">
+        <label class="fin-label"><input type="checkbox" id="fin-apholos"/><span id="l-fin-aph">Carta APHOLOS</span></label>
+        <div class="col"><span class="lbl" id="l-fin-aph-c">Código</span><input type="text" id="f-aph" placeholder="APH-247"/></div>
+      </div>
+      <div class="fin-card">
+        <label class="fin-label"><input type="checkbox" id="fin-pantone"/><span>Pantone</span></label>
+        <div class="col"><span class="lbl">Código</span><input type="text" id="f-pan" placeholder="Pantone 877 C"/></div>
+      </div>
+      <div class="fin-card">
+        <label class="fin-label"><input type="checkbox" id="fin-kurz"/><span>Kurz</span></label>
+        <div class="col"><span class="lbl" id="l-fin-kurz-c">Referencia</span><input type="text" id="f-kurz" placeholder="LUXOR 355"/></div>
+      </div>
+      <div class="fin-card">
+        <label class="fin-label"><input type="checkbox" id="fin-wood"/><span id="l-fin-wood">Madera</span></label>
+        <div class="col"><span class="lbl" id="l-fin-wood-c">Especie / Código</span><input type="text" id="f-wood" placeholder="Roble natural"/></div>
+      </div>
+    </div>
+    <div class="dvd"></div>
+    <div style="font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px;" id="t-fin-chk">Checklist de acabado</div>
+    <div id="fin-checks" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;"></div>
+    <div class="dvd"></div>
+    <div style="font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px;" id="t-fin-ref">Imagen de referencia de color</div>
+    <div class="dz" id="dz-colorref" style="height:110px;" ondragover="odo(event,this)" ondragleave="odl(this)" ondrop="odp(event,'colorref',false)" onclick="selZone('colorref')">
+      <input type="file" accept="image/*" onchange="lf(event,'colorref',false)" onclick="event.stopPropagation()"/>
+      <i class="ico ti ti-color-swatch"></i>
+      <div class="hint" id="t-fin-ref-hint">Carta de color / producto aprobado · Clic · drag · <kbd>Ctrl+V</kbd></div>
+    </div>
+    <div class="col" style="margin-top:10px;"><span class="lbl" id="l-fin-obs">Observaciones de acabado</span><textarea id="fin-obs" placeholder="Color, brillo, textura, diferencias..."></textarea></div>
+  </div>
+</div>
+
+<!-- ══ ANALYSIS ══ -->
+<div id="p-analysis" class="pnl">
+  <div class="g4" style="margin-bottom:12px;">
+    <div class="metric"><div class="lbl" id="t-m1">Imágenes</div><div class="val" id="m1">0/4</div><div class="sub" id="t-m1s">cargadas</div></div>
+    <div class="metric"><div class="lbl" id="t-m2">Fase</div><div class="val" id="m2" style="font-size:14px;">Pre</div><div class="sub">activa</div></div>
+    <div class="metric"><div class="lbl" id="t-m3">Cotas OK</div><div class="val" id="m3" style="font-size:14px;">—</div><div class="sub" id="t-m3s">de 4</div></div>
+    <div class="metric"><div class="lbl" id="t-m4">Análisis</div><div class="val" id="m4" style="font-size:12px;padding-top:3px;">Pendiente</div><div class="sub">estado</div></div>
+  </div>
+  <div style="font-size:12px;font-weight:600;margin-bottom:8px;" id="t-verif">Verificación</div>
+  <div id="cl" style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;"></div>
+  <div style="font-size:12px;font-weight:600;margin-bottom:8px;" id="t-ai-ttl">Análisis IA</div>
+  <div class="ai-box" id="ai-box">
+    <div class="ai-hd"><i class="ti ti-sparkles" style="font-size:14px;color:#888;"></i><span style="font-size:12px;font-weight:600;" id="t-ai-pend">Análisis pendiente</span><span class="ai-tag">Claude IA</span></div>
+    <div class="ai-body" style="font-style:italic;" id="t-ai-hint">Cargá imágenes y ejecutá el análisis.</div>
+  </div>
+  <div class="row" style="flex-wrap:wrap;">
+    <button class="btn pri" onclick="doAI()"><i class="ti ti-sparkles"></i><span id="t-run">Ejecutar análisis IA</span></button>
+    <button class="btn" onclick="doAI('pre')"><i class="ti ti-package"></i>Pre-prod</button>
+    <button class="btn" onclick="doAI('post')"><i class="ti ti-star"></i>Post-prod</button>
+  </div>
+  <div id="verd-box"></div>
+</div>
+
+<!-- ══ REPORT ══ -->
+<div id="p-report" class="pnl">
+  <div class="card">
+    <div class="rp-hdr">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="rp-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5M2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:16px;font-weight:700;letter-spacing:.4px;">APHOLOS</div>
+          <div style="font-size:10px;color:#888;" id="rp-sub">Registro de Control de Calidad</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:10px;color:#888;" id="rp-nro-lbl">N° registro</div>
+        <div style="font-size:13px;font-weight:700;" id="rp-nro">—</div>
+        <div style="font-size:11px;color:#888;" id="rp-fecha-hdr">—</div>
+      </div>
+    </div>
+    <div class="rp-grid">
+      <div class="rp-cell"><div class="rp-k" id="rp-l-marca">Marca</div><div class="rp-v" id="rp-marca">—</div></div>
+      <div class="rp-cell"><div class="rp-k" id="rp-l-cliente">Cliente</div><div class="rp-v" id="rp-cliente">—</div></div>
+      <div class="rp-cell"><div class="rp-k" id="rp-l-insp">Inspector</div><div class="rp-v" id="rp-inspector">—</div></div>
+      <div class="rp-cell rp-cell2"><div class="rp-k" id="rp-l-molde">N° molde</div><div class="rp-v" id="rp-molde">—</div></div>
+      <div class="rp-cell rp-cell2"><div class="rp-k">N° OP</div><div class="rp-v" id="rp-op">—</div></div>
+      <div class="rp-cell rp-cell2"><div class="rp-k" id="rp-l-fase">Fase</div><div class="rp-v" id="rp-fase">—</div></div>
+    </div>
+    <div class="rp-row"><span class="k" id="rp-l-ref">Referencia</span><span class="v" id="rp-ref">—</span></div>
+    <div class="rp-row"><span class="k" id="rp-l-desc">Descripción</span><span class="v" id="rp-desc">—</span></div>
+    <div class="rp-row"><span class="k" id="rp-l-imgs">Imágenes cargadas</span><span class="v" id="rp-imgs">—</span></div>
+  </div>
+  <div class="card"><div class="ct"><i class="ti ti-ruler"></i><span id="rp-l-dim">Control dimensional</span></div><div id="rp-dim"><p style="font-size:12px;color:#aaa;font-style:italic;">Sin mediciones ingresadas.</p></div></div>
+  <div class="card"><div class="ct"><i class="ti ti-palette"></i><span id="rp-l-fin">Control de acabados</span></div><div id="rp-fin"><p style="font-size:12px;color:#aaa;font-style:italic;">Sin datos de acabado.</p></div></div>
+  <div class="card"><div class="ct"><i class="ti ti-brain"></i><span id="rp-l-ai">Resultado análisis IA</span></div><div id="rp-ai" class="ai-body" style="font-style:italic;color:#aaa;">Sin análisis ejecutado.</div><div id="rp-verd"></div></div>
+  <div class="card no-print"><div class="ct"><i class="ti ti-notes"></i><span id="rp-l-obs">Observaciones adicionales</span></div><textarea id="obs" placeholder="Notas del inspector..."></textarea></div>
+  <div id="rp-obs-card" style="display:none;" class="card"><div class="ct"><i class="ti ti-notes"></i>Observaciones</div><div id="rp-obs-txt" class="ai-body"></div></div>
+  <div class="row no-print">
+    <button class="btn pri" onclick="printRp()"><i class="ti ti-printer"></i><span id="t-print">Imprimir / Guardar PDF</span></button>
+    <button class="btn" onclick="cpRp()"><i class="ti ti-copy"></i><span id="t-copy">Copiar texto</span></button>
+    <button class="btn" onclick="go('upload',document.getElementById('tab-upload'))"><i class="ti ti-arrow-left"></i><span id="t-edit">Editar</span></button>
+  </div>
+  <div style="font-size:10px;color:#aaa;margin-top:6px;" class="no-print" id="t-pdf-hint">Imprimir → Guardar como PDF → subir a Google Drive.</div>
+</div>
+
+</div><!-- .app -->
+
+<script>
+// ── STATE ──
+var imgs = {design:null,mold:null,injected:null,final:null,caliper:null,colorref:null};
+var NMS  = {design:'Diseño 2D',mold:'Molde',injected:'Inyectado',final:'Final',caliper:'Calibre',colorref:'Ref.Color'};
+var KEYS = ['design','mold','injected','final'];
+var LS   = {
+  design:   {vis:true, opa:70,  blend:'screen',     color:'red'},
+  mold:     {vis:true, opa:80,  blend:'source-over', color:'normal'},
+  injected: {vis:true, opa:100, blend:'source-over', color:'normal'},
+  final:    {vis:false,opa:100, blend:'source-over', color:'normal'}
+};
+var TX = {
+  design:   {sx:100,sy:100,rot:0,x:0,y:0},
+  mold:     {sx:100,sy:100,rot:0,x:0,y:0},
+  injected: {sx:100,sy:100,rot:0,x:0,y:0},
+  final:    {sx:100,sy:100,rot:0,x:0,y:0}
+};
+var BLENDS = ['source-over','screen','multiply','overlay','difference'];
+var COLORS = ['normal','red','green','blue','sepia'];
+var CCSS   = {normal:null, red:'rgba(200,57,26,.75)', green:'rgba(45,106,63,.75)', blue:'rgba(12,61,122,.75)', sepia:'rgba(120,80,20,.65)'};
+var DIMS   = [{desc:'',nom:'',tol:.3,med:''},{desc:'',nom:'',tol:.3,med:''},{desc:'',nom:'',tol:.3,med:''},{desc:'',nom:'',tol:.3,med:''}];
+var FIN_ITEMS = [
+  {id:'fc1',es:'Acabado uniforme en toda la superficie',en:'Uniform finish across entire surface'},
+  {id:'fc2',es:'Sin defectos visibles (burbujas, rayaduras, manchas)',en:'No visible defects (bubbles, scratches, stains)'},
+  {id:'fc3',es:'Color dentro de tolerancia de referencia',en:'Color within reference tolerance'},
+  {id:'fc4',es:'Nivel de brillo correcto',en:'Correct gloss level'},
+  {id:'fc5',es:'Textura superficial correcta',en:'Correct surface texture'},
+  {id:'fc6',es:'Bordes y cantos sin rebabas',en:'Edges without burrs'}
+];
+var phase='pre', lastAI='', lastVerdict='', activeZone=null, lang='es';
+var dimBuilt=false, finBuilt=false;
+
+// ── API KEY ──
+function getKey(){ try{return localStorage.getItem('apholos_api_key')||'';}catch(e){return '';} }
+function saveKey(){
+  var k = document.getElementById('api-inp').value.trim();
+  if(!k){toast('Ingresá una API key'); return;}
+  try{localStorage.setItem('apholos_api_key',k);}catch(e){}
+  document.getElementById('api-inp').value = '';
+  document.getElementById('api-inp').placeholder = '••••••••••••••••';
+  document.getElementById('api-status').textContent = '✓ API key guardada en este navegador';
+  document.getElementById('api-box').className = 'api-box ok';
+  toast('API key guardada ✓');
+}
+function clearKey(){
+  try{localStorage.removeItem('apholos_api_key');}catch(e){}
+  document.getElementById('api-inp').placeholder = 'sk-ant-api03-...';
+  document.getElementById('api-status').textContent = 'Sin API key guardada';
+  document.getElementById('api-box').className = 'api-box';
+  toast('API key eliminada');
+}
+(function(){
+  if(getKey()){
+    document.getElementById('api-inp').placeholder = '••••••••••••••••';
+    document.getElementById('api-status').textContent = '✓ API key guardada en este navegador';
+    document.getElementById('api-box').className = 'api-box ok';
+  }
+})();
+
+// ── UTILS ──
+function toast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');}, 2200);
+}
+function gv(id){ var el=document.getElementById(id); return el&&el.value.trim()?el.value.trim():'—'; }
+
+// ── NAV ──
+function go(id, btn){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+  if(btn) btn.classList.add('on');
+  document.querySelectorAll('.pnl').forEach(function(p){p.classList.remove('on');});
+  document.getElementById('p-'+id).classList.add('on');
+  if(id==='compare'){buildLayerList(); drawOv(); updThumbs();}
+  if(id==='analysis'){updMetrics(); updCL();}
+  if(id==='report') updReport();
+  if(id==='dim')    buildDimTable();
+  if(id==='finish') buildFinish();
+}
+
+// ── ZONE SELECTION ──
+function selZone(key){
+  activeZone = key;
+  document.querySelectorAll('.dz').forEach(function(d){d.classList.remove('az');});
+  var dz = document.getElementById('dz-'+key);
+  if(dz) dz.classList.add('az');
+  var h = document.getElementById('paste-hint');
+  if(h) h.textContent = 'Zona activa: '+NMS[key]+' — ahora pegá con Ctrl+V ✓';
+}
+
+// ── PASTE (mismo patrón que el test que funcionó) ──
+document.addEventListener('paste', function(e){
+  var cd = e.clipboardData;
+  if(!cd) return;
+  var found = null;
+  for(var i=0; i<cd.items.length; i++){
+    if(cd.items[i].kind==='file' && cd.items[i].type.indexOf('image')===0){
+      found = cd.items[i]; break;
+    }
+  }
+  if(!found) return;
+  var blob = found.getAsFile();
+  if(!blob) return;
+  e.preventDefault();
+  var key = activeZone;
+  if(!key){
+    var missing = Object.keys(imgs).filter(function(k){return !imgs[k] && k!=='mold';});
+    if(!missing.length){toast('Todas las zonas tienen imagen.'); return;}
+    key = missing[0];
+  }
+  processBlob(blob, key, key==='mold');
+  var h = document.getElementById('paste-hint');
+  if(h) h.textContent = 'Pegado en: '+NMS[key]+' ✓';
+});
+
+// ── IMAGE LOAD ──
+function processBlob(blob, key, mirror){
+  var r = new FileReader();
+  r.onload = function(ev){
+    if(mirror){
+      var im = new Image();
+      im.onload = function(){
+        var c = document.createElement('canvas');
+        c.width = im.width; c.height = im.height;
+        var x = c.getContext('2d');
+        x.translate(im.width,0); x.scale(-1,1); x.drawImage(im,0,0);
+        imgs[key] = c.toDataURL(); imgDone(key);
+      };
+      im.src = ev.target.result;
+    } else {
+      imgs[key] = ev.target.result; imgDone(key);
+    }
+  };
+  r.readAsDataURL(blob);
+}
+function imgDone(key){
+  showDZ('dz-'+key, imgs[key], key==='mold');
+  if(KEYS.indexOf(key)>=0){ updThumbs(); buildLayerList(); drawOv(); }
+  updCL();
+  toast('Cargado: '+(NMS[key]||key));
+}
+function lf(e, key, mirror){ var f=e.target.files[0]; if(f) processBlob(f,key,mirror); }
+
+function showDZ(id, src, mirrored){
+  var dz = document.getElementById(id); if(!dz) return;
+  var key = id.replace('dz-','');
+  dz.classList.add('filled'); dz.classList.remove('az');
+  dz.innerHTML =
+    '<img class="prev" src="'+src+'" alt=""/>'+
+    '<span class="itag">'+(mirrored?'espejado':'OK')+'</span>'+
+    '<button class="clr" onclick="clearImg(\''+key+'\',event)">✕ quitar</button>';
+}
+function clearImg(key, e){
+  if(e) e.stopPropagation();
+  imgs[key] = null;
+  var dz = document.getElementById('dz-'+key); if(!dz) return;
+  dz.classList.remove('filled','az');
+  var ICONS = {design:'ti-file-vector',mold:'ti-device-imac',injected:'ti-package',final:'ti-award',caliper:'ti-camera',colorref:'ti-color-swatch'};
+  dz.innerHTML =
+    '<input type="file" accept="image/*" onchange="lf(event,\''+key+'\','+String(key==='mold')+')" onclick="event.stopPropagation()"/>'+
+    '<i class="ico ti '+(ICONS[key]||'ti-upload')+'"></i>'+
+    '<div class="hint">Clic · drag · <kbd>Ctrl+V</kbd></div>';
+  if(activeZone===key) activeZone=null;
+  if(KEYS.indexOf(key)>=0){ updThumbs(); buildLayerList(); drawOv(); }
+  updCL();
+}
+function clearAll(){
+  Object.keys(imgs).forEach(function(k){clearImg(k,null);});
+  activeZone = null;
+  var h = document.getElementById('paste-hint');
+  if(h) h.textContent = 'Zona activa: ninguna';
+  toast('Todo limpiado');
+}
+function odo(e,el){e.preventDefault();e.stopPropagation();el.classList.add('drag-over');}
+function odl(el){el.classList.remove('drag-over');}
+function odp(e,key,mirror){
+  e.preventDefault(); e.stopPropagation();
+  var dz=document.getElementById('dz-'+key); if(dz) dz.classList.remove('drag-over');
+  var f=e.dataTransfer.files[0];
+  if(f && f.type.startsWith('image/')) processBlob(f,key,mirror);
+}
+
+// ── PHASE ──
+function setPhase(p, btn){
+  phase = p;
+  document.querySelectorAll('.pill').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  buildLayerList(); drawOv();
+}
+
+// ── LAYER LIST ──
+function buildLayerList(){
+  var ll = document.getElementById('layer-list'); if(!ll) return;
+  ll.innerHTML = '';
+  var order = phase==='pre' ? ['injected','mold','design'] : ['final','mold','design'];
+  order.forEach(function(key){
+    var l=LS[key], hasImg=!!imgs[key];
+    var tagMap={design:'REF',mold:'MOLD',injected:'PRE',final:'POST'};
+    var row = document.createElement('div');
+    row.className = 'lr' + ((!l.vis||!hasImg)?' off':'');
+    row.id = 'lr-'+key;
+    row.innerHTML =
+      '<div class="lr-th">'+(hasImg?'<img src="'+imgs[key]+'" alt=""/>':'')+'</div>'+
+      '<div style="flex:1;min-width:0;"><div class="lr-name">'+NMS[key]+'</div><div class="lr-tag">'+tagMap[key]+'</div></div>'+
+      '<div class="tog '+(l.vis?'on':'')+'" id="tog-'+key+'" onclick="togVis(\''+key+'\')"></div>';
+    ll.appendChild(row);
+
+    var ctrl = document.createElement('div');
+    ctrl.className = 'lrc';
+    ctrl.innerHTML =
+      '<div class="sl-row"><span class="sl-lbl">Opacidad</span>'+
+        '<input type="range" min="0" max="100" value="'+l.opa+'" '+
+          'oninput="LS[\''+key+'\'].opa=parseInt(this.value);document.getElementById(\'opav-'+key+'\').textContent=this.value+\'%\';drawOv();">'+
+        '<span class="sl-val" id="opav-'+key+'">'+l.opa+'%</span></div>'+
+      '<div class="brow"><label>Blend</label>'+
+        '<select onchange="LS[\''+key+'\'].blend=this.value;drawOv();">'+
+          BLENDS.map(function(b){return '<option value="'+b+'"'+(b===l.blend?' selected':'')+'>'+b+'</option>';}).join('')+
+        '</select></div>'+
+      '<div class="brow"><label>Color</label>'+
+        '<select onchange="LS[\''+key+'\'].color=this.value;drawOv();">'+
+          COLORS.map(function(c){return '<option value="'+c+'"'+(c===l.color?' selected':'')+'>'+c+'</option>';}).join('')+
+        '</select></div>'+
+      '<div class="tx-ttl">Transformar</div>'+
+      '<div class="sl-row"><span class="sl-lbl">Escala X</span>'+
+        '<input type="range" min="10" max="300" value="'+TX[key].sx+'" id="sx-'+key+'" '+
+          'oninput="TX[\''+key+'\'].sx=parseInt(this.value);document.getElementById(\'sxv-'+key+'\').textContent=this.value+\'%\';drawOv();">'+
+        '<span class="sl-val" id="sxv-'+key+'">'+TX[key].sx+'%</span></div>'+
+      '<div class="sl-row"><span class="sl-lbl">Escala Y</span>'+
+        '<input type="range" min="10" max="300" value="'+TX[key].sy+'" id="sy-'+key+'" '+
+          'oninput="TX[\''+key+'\'].sy=parseInt(this.value);document.getElementById(\'syv-'+key+'\').textContent=this.value+\'%\';drawOv();">'+
+        '<span class="sl-val" id="syv-'+key+'">'+TX[key].sy+'%</span></div>'+
+      '<div class="qb">'+[50,75,100,125,150,200].map(function(v){return '<button onclick="qScale(\''+key+'\','+v+')">'+v+'%</button>';}).join('')+'</div>'+
+      '<div class="sl-row"><span class="sl-lbl">Rotación</span>'+
+        '<input type="range" min="-180" max="180" value="'+TX[key].rot+'" id="rot-'+key+'" '+
+          'oninput="TX[\''+key+'\'].rot=parseInt(this.value);document.getElementById(\'rotv-'+key+'\').textContent=this.value+\'°\';drawOv();">'+
+        '<span class="sl-val" id="rotv-'+key+'">'+TX[key].rot+'°</span></div>'+
+      '<div class="qb">'+[-90,-45,0,45,90].map(function(v){return '<button onclick="qRot(\''+key+'\','+v+')">'+(v>0?'+':'')+v+'°</button>';}).join('')+'</div>'+
+      '<div class="sl-row"><span class="sl-lbl">Pos. X</span>'+
+        '<input type="range" min="-300" max="300" value="'+TX[key].x+'" id="px-'+key+'" '+
+          'oninput="TX[\''+key+'\'].x=parseInt(this.value);document.getElementById(\'pxv-'+key+'\').textContent=this.value;drawOv();">'+
+        '<span class="sl-val" id="pxv-'+key+'">'+TX[key].x+'</span></div>'+
+      '<div class="sl-row"><span class="sl-lbl">Pos. Y</span>'+
+        '<input type="range" min="-300" max="300" value="'+TX[key].y+'" id="py-'+key+'" '+
+          'oninput="TX[\''+key+'\'].y=parseInt(this.value);document.getElementById(\'pyv-'+key+'\').textContent=this.value;drawOv();">'+
+        '<span class="sl-val" id="pyv-'+key+'">'+TX[key].y+'</span></div>'+
+      '<button class="btn xs" style="width:100%;justify-content:center;margin-top:4px;" onclick="resetTX(\''+key+'\')">'+
+        '<i class="ti ti-refresh" style="font-size:11px;"></i> Reset capa</button>';
+    ll.appendChild(ctrl);
+  });
+}
+
+function togVis(key){
+  LS[key].vis=!LS[key].vis;
+  var t=document.getElementById('tog-'+key); if(t) t.classList.toggle('on',LS[key].vis);
+  var r=document.getElementById('lr-'+key);  if(r) r.classList.toggle('off',!LS[key].vis);
+  drawOv();
+}
+function qScale(key,v){
+  TX[key].sx=v; TX[key].sy=v;
+  var sx=document.getElementById('sx-'+key); if(sx) sx.value=v;
+  var sy=document.getElementById('sy-'+key); if(sy) sy.value=v;
+  var sxv=document.getElementById('sxv-'+key); if(sxv) sxv.textContent=v+'%';
+  var syv=document.getElementById('syv-'+key); if(syv) syv.textContent=v+'%';
+  drawOv();
+}
+function qRot(key,v){
+  TX[key].rot=v;
+  var el=document.getElementById('rot-'+key); if(el) el.value=v;
+  var vl=document.getElementById('rotv-'+key); if(vl) vl.textContent=v+'°';
+  drawOv();
+}
+function resetTX(key){
+  TX[key]={sx:100,sy:100,rot:0,x:0,y:0};
+  buildLayerList(); drawOv(); toast('Capa reseteada');
+}
+
+// ── DRAW OVERLAY ──
+function drawOv(){
+  var canvas=document.getElementById('ov-canvas');
+  var empty=document.getElementById('ov-empty');
+  if(!canvas) return;
+  var W=600, H=600;
+  var ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#e8e5df'; ctx.fillRect(0,0,W,H);
+  var order=phase==='pre'?['injected','mold','design']:['final','mold','design'];
+  var hasAny=order.some(function(k){return imgs[k]&&LS[k].vis;});
+  if(!hasAny){canvas.style.display='none'; if(empty) empty.style.display='flex'; return;}
+  canvas.style.display='block'; if(empty) empty.style.display='none';
+  function seq(idx){
+    if(idx>=order.length) return;
+    var key=order[idx], l=LS[key];
+    if(!imgs[key]||!l.vis){seq(idx+1); return;}
+    var im=new Image();
+    im.onload=function(){
+      var t=TX[key];
+      ctx.save();
+      ctx.translate(W/2+t.x, H/2+t.y);
+      ctx.rotate(t.rot*Math.PI/180);
+      ctx.scale(t.sx/100, t.sy/100);
+      ctx.globalAlpha=l.opa/100;
+      ctx.globalCompositeOperation=l.blend;
+      ctx.drawImage(im,-W/2,-H/2,W,H);
+      var css=CCSS[l.color];
+      if(css){
+        ctx.globalCompositeOperation='source-atop';
+        ctx.fillStyle=css;
+        ctx.fillRect(-W/2,-H/2,W,H);
+      }
+      ctx.restore();
+      seq(idx+1);
+    };
+    im.onerror=function(){seq(idx+1);};
+    im.src=imgs[key];
+  }
+  seq(0);
+}
+
+function updThumbs(){
+  KEYS.forEach(function(key){
+    var th=document.getElementById('th-'+key); if(!th) return;
+    th.innerHTML='';
+    if(imgs[key]){
+      var i=document.createElement('img');
+      i.src=imgs[key]; i.style.cssText='width:100%;height:100%;object-fit:contain;';
+      th.appendChild(i);
+    } else {
+      th.innerHTML='<i class="ti ti-upload" style="font-size:14px;color:#ccc;"></i>';
+    }
+  });
+}
+
+function expOv(){
+  var c=document.getElementById('ov-canvas');
+  if(!c||c.style.display==='none'){toast('No hay overlay para exportar.'); return;}
+  setTimeout(function(){
+    var a=document.createElement('a');
+    a.download='overlay-apholos.png'; a.href=c.toDataURL(); a.click();
+  },80);
+}
+
+// ── DIMENSIONAL ──
+function buildDimTable(){
+  if(dimBuilt) return; dimBuilt=true;
+  var tb=document.getElementById('dim-body'); if(!tb) return;
+  DIMS.forEach(function(r,i){
+    var tr=document.createElement('tr');
+    tr.innerHTML=
+      '<td style="font-weight:600;color:#888;font-size:11px;">'+(i+1)+'</td>'+
+      '<td><input type="text" id="dd-'+i+'" value="'+r.desc+'" placeholder="Ej: Diámetro ext." oninput="DIMS['+i+'].desc=this.value"/></td>'+
+      '<td><input type="number" id="dn-'+i+'" value="'+r.nom+'" placeholder="0.00" step="0.01" oninput="DIMS['+i+'].nom=this.value"/></td>'+
+      '<td><input type="number" id="dt-'+i+'" value="'+r.tol+'" step="0.01" style="width:60px;" oninput="DIMS['+i+'].tol=parseFloat(this.value)"/></td>'+
+      '<td><input type="number" id="dm-'+i+'" value="'+r.med+'" placeholder="0.00" step="0.01" oninput="DIMS['+i+'].med=this.value"/></td>'+
+      '<td id="dv-'+i+'" class="s-na">—</td>'+
+      '<td id="ds-'+i+'" class="s-na">—</td>';
+    tb.appendChild(tr);
+  });
+}
+function calcDim(){
+  var ok=0,total=0;
+  DIMS.forEach(function(r,i){
+    var nom=parseFloat(r.nom),med=parseFloat(r.med),tol=parseFloat(r.tol)||.3;
+    var dv=document.getElementById('dv-'+i),ds=document.getElementById('ds-'+i);
+    if(!dv||!ds) return;
+    if(isNaN(nom)||isNaN(med)||r.nom===''||r.med===''){
+      dv.textContent='—';dv.className='s-na';ds.textContent='—';ds.className='s-na'; return;
+    }
+    total++;
+    var dev=med-nom;
+    dv.textContent=(dev>=0?'+':'')+dev.toFixed(3)+' mm';
+    if(Math.abs(dev)<=tol){dv.className='s-ok';ds.textContent='✓ OK';ds.className='s-ok';ok++;}
+    else if(Math.abs(dev)<=tol*1.5){dv.className='s-warn';ds.textContent='⚠ WARN';ds.className='s-warn';}
+    else{dv.className='s-fail';ds.textContent='✗ FAIL';ds.className='s-fail';}
+  });
+  document.getElementById('m3').textContent = total>0 ? ok+'/'+total : '—';
+  toast('Desvíos calculados: '+ok+' de '+total+' dentro de tolerancia');
+}
+function clearDim(){
+  DIMS.forEach(function(r,i){
+    r.desc='';r.nom='';r.med='';
+    ['dd-'+i,'dn-'+i,'dm-'+i].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+    var dv=document.getElementById('dv-'+i),ds=document.getElementById('ds-'+i);
+    if(dv){dv.textContent='—';dv.className='s-na';}
+    if(ds){ds.textContent='—';ds.className='s-na';}
+  });
+  document.getElementById('m3').textContent='—';
+  toast('Tabla limpiada');
+}
+
+// ── FINISH ──
+function buildFinish(){
+  if(finBuilt) return; finBuilt=true;
+  var fc=document.getElementById('fin-checks'); if(!fc) return;
+  FIN_ITEMS.forEach(function(item){
+    var div=document.createElement('div'); div.className='chk';
+    div.innerHTML='<input type="checkbox" id="'+item.id+'"/>'+
+      '<label for="'+item.id+'" style="cursor:pointer;font-size:12px;color:#111;">'+item.es+'</label>';
+    fc.appendChild(div);
+  });
+}
+
+// ── CHECKLIST ──
+function updCL(){
+  var checks=[
+    {ok:!!imgs.design,   es:'Diseño 2D cargado',           en:'2D design loaded'},
+    {ok:!!imgs.mold,     es:'Molde cargado (opcional)',     en:'Mold loaded (optional)'},
+    {ok:!!imgs.injected, es:'Producto inyectado cargado',   en:'Injected product loaded'},
+    {ok:!!imgs.final,    es:'Producto final cargado',       en:'Final product loaded'},
+    {ok:!!imgs.design&&(!!imgs.injected||!!imgs.final||!!imgs.mold), es:'Overlay disponible', en:'Overlay available'},
+    {ok:!!lastAI,        es:'Análisis IA ejecutado',        en:'AI analysis run'}
+  ];
+  var cl=document.getElementById('cl'); if(!cl) return;
+  cl.innerHTML=checks.map(function(c){
+    return '<div class="chk">'+
+      '<i class="ti '+(c.ok?'ti-circle-check':'ti-circle-dashed')+'" style="font-size:14px;color:'+(c.ok?'#275010':'#ccc')+';flex-shrink:0;"></i>'+
+      '<span>'+(lang==='en'?c.en:c.es)+'</span>'+
+      (c.ok?'<span class="bdg b-green" style="margin-left:auto;font-size:9px;">✓</span>':'')+
+      '</div>';
+  }).join('');
+}
+function updMetrics(){
+  var n=KEYS.filter(function(k){return imgs[k];}).length;
+  document.getElementById('m1').textContent=n+'/4';
+  document.getElementById('m2').textContent=phase==='pre'?'Pre':'Post';
+  document.getElementById('m4').textContent=lastAI?(lang==='en'?'Done':'Listo'):(lang==='en'?'Pending':'Pendiente');
+}
+
+// ── AI ANALYSIS ──
+async function doAI(fp){
+  var p=fp||phase;
+  var apiKey=getKey();
+  if(!apiKey){toast('⚠ Ingresá tu API key de Anthropic arriba'); return;}
+  var box=document.getElementById('ai-box');
+  box.innerHTML=
+    '<div class="ai-hd"><i class="ti ti-sparkles" style="font-size:14px;color:#888;"></i>'+
+    '<span style="font-size:12px;font-weight:600;">'+(lang==='en'?'Analyzing':'Analizando')+'<span class="dots"></span></span>'+
+    '<span class="ai-tag">Claude IA</span></div>'+
+    '<div class="ai-body" style="font-style:italic;">'+(lang==='en'?'Processing...':'Procesando...')+'</div>';
+  document.getElementById('verd-box').innerHTML='';
+  var dimSum=DIMS.filter(function(r){return r.nom&&r.med;}).map(function(r,i){
+    return 'Cota '+(i+1)+' "'+r.desc+'": nom='+r.nom+'mm med='+r.med+'mm tol=±'+r.tol+'mm';
+  }).join('; ')||'No ingresadas';
+  var finT=[];
+  if(document.getElementById('fin-apholos')&&document.getElementById('fin-apholos').checked) finT.push('APHOLOS: '+gv('f-aph'));
+  if(document.getElementById('fin-pantone')&&document.getElementById('fin-pantone').checked)  finT.push('Pantone: '+gv('f-pan'));
+  if(document.getElementById('fin-kurz')&&document.getElementById('fin-kurz').checked)        finT.push('Kurz: '+gv('f-kurz'));
+  if(document.getElementById('fin-wood')&&document.getElementById('fin-wood').checked)        finT.push((lang==='en'?'Wood':'Madera')+': '+gv('f-wood'));
+  var finOK=FIN_ITEMS.filter(function(f){var el=document.getElementById(f.id);return el&&el.checked;}).map(function(f){return lang==='en'?f.en:f.es;}).join(', ')||'—';
+  var avail=[];
+  if(imgs.design)   avail.push('Diseño 2D');
+  if(imgs.mold)     avail.push('Molde espejado');
+  if(imgs.injected) avail.push('Inyectado');
+  if(imgs.final)    avail.push('Producto final');
+  if(imgs.caliper)  avail.push('Foto con calibre');
+  if(imgs.colorref) avail.push('Referencia de color');
+  var prompt=lang==='en'?
+    'You are an expert in industrial quality control for metal and injection-molded parts at APHOLOS.\nBrand:'+gv('f-marca')+' Client:'+gv('f-cliente')+' Mold:'+gv('f-molde')+' Order:'+gv('f-op')+' Ref:'+gv('f-ref')+' Desc:'+gv('f-desc')+'\nPhase:'+(p==='pre'?'Pre-production':'Post-production')+'\nImages: '+avail.join(', ')+'\nDimensional: '+dimSum+'\nFinish: '+finT.join(', ')+'\nApproved checklist: '+finOK+'\nProvide structured QC report: 1)Dimensional eval(tol±0.3mm) 2)Detail fidelity 3)Mirror correction 4)Defects to verify 5)Finish evaluation 6)Phase conclusion 7)Verdict: APPROVED / APPROVED WITH OBSERVATIONS / REJECTED. Technical, concise, English.'
+    :'Sos experto en control de calidad industrial para piezas metálicas y plástico inyectado en APHOLOS.\nMarca:'+gv('f-marca')+' Cliente:'+gv('f-cliente')+' Molde:'+gv('f-molde')+' OP:'+gv('f-op')+' Ref:'+gv('f-ref')+' Desc:'+gv('f-desc')+'\nFase:'+(p==='pre'?'Pre-producción':'Post-producción')+'\nImágenes: '+avail.join(', ')+'\nCotas: '+dimSum+'\nAcabados: '+finT.join(', ')+'\nChecklist aprobado: '+finOK+'\nGenerá análisis técnico: 1)Evaluación dimensional(tol STD±0.3mm) 2)Fidelidad de detalles 3)Corrección del espejado 4)Defectos a verificar 5)Evaluación de acabado 6)Conclusión de fase 7)Veredicto: APROBADO / APROBADO CON OBSERVACIONES / RECHAZADO. Español, técnico, conciso.';
+  try{
+    var content=[];
+    var phaseImgs=p==='pre'?['design','mold','injected','caliper']:['design','final','colorref'];
+    phaseImgs.forEach(function(k){
+      if(imgs[k]) content.push({type:'image',source:{type:'base64',media_type:'image/png',data:imgs[k].split(',')[1]}});
+    });
+    content.push({type:'text',text:prompt});
+    var res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:content}]})
+    });
+    var data=await res.json();
+    if(data.error){
+      box.innerHTML='<div class="ai-hd"><i class="ti ti-alert-triangle" style="font-size:14px;color:#c8391a;"></i><span style="font-size:12px;font-weight:600;">Error API</span><span class="ai-tag">Claude IA</span></div>'+
+        '<div class="ai-body" style="color:#c8391a;">'+data.error.message+'</div>';
+      return;
+    }
+    var txt=(data.content||[]).map(function(c){return c.text||'';}).join('\n')||'Sin respuesta.';
+    lastAI=txt;
+    var html=txt.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'</p><p style="margin-top:7px">').replace(/\n/g,'<br/>');
+    box.innerHTML=
+      '<div class="ai-hd"><i class="ti ti-sparkles" style="font-size:14px;color:#888;"></i>'+
+      '<span style="font-size:12px;font-weight:600;">'+(lang==='en'?'Analysis complete':'Análisis completado')+'</span>'+
+      '<span class="ai-tag">Claude IA</span></div>'+
+      '<div class="ai-body"><p>'+html+'</p></div>';
+    var tl=txt.toLowerCase(), vb=document.getElementById('verd-box');
+    if(tl.includes('rechazado')||tl.includes('rejected')){
+      lastVerdict='rejected';
+      vb.innerHTML='<div class="verd v-err"><i class="ti ti-x" style="font-size:20px;"></i><div><div class="vt">'+(lang==='en'?'Part rejected':'Pieza rechazada')+'</div><div class="vs">'+(lang==='en'?'Does not meet quality criteria':'No cumple los criterios de calidad')+'</div></div></div>';
+    } else if(tl.includes('observaciones')||tl.includes('observations')){
+      lastVerdict='observations';
+      vb.innerHTML='<div class="verd v-warn"><i class="ti ti-alert-triangle" style="font-size:20px;"></i><div><div class="vt">'+(lang==='en'?'Approved with observations':'Aprobado con observaciones')+'</div><div class="vs">'+(lang==='en'?'Review indicated points':'Revisar los puntos indicados')+'</div></div></div>';
+    } else if(tl.includes('aprobado')||tl.includes('approved')){
+      lastVerdict='approved';
+      vb.innerHTML='<div class="verd v-ok"><i class="ti ti-circle-check" style="font-size:20px;"></i><div><div class="vt">'+(lang==='en'?'Part approved':'Pieza aprobada')+'</div><div class="vs">'+(lang==='en'?'Meets quality criteria':'Cumple los criterios de calidad')+'</div></div></div>';
+    } else {
+      lastVerdict='';
+    }
+    updCL(); updMetrics();
+  } catch(err){
+    box.innerHTML='<div class="ai-hd"><i class="ti ti-alert-triangle" style="font-size:14px;color:#c8391a;"></i><span style="font-size:12px;font-weight:600;">Error de conexión</span></div>'+
+      '<div class="ai-body" style="color:#c8391a;">'+err.message+'<br/><br/>Si abrís desde file://, usá un servidor local: <code>python -m http.server 8080</code></div>';
+  }
+}
+
+// ── REPORT ──
+function nroReg(){
+  var f=(document.getElementById('f-fecha')||{value:''}).value.replace(/-/g,'');
+  return 'RC-'+f+'-'+((document.getElementById('f-op')||{value:''}).value||'SIN-OP');
+}
+function fmtF(v){
+  if(!v||v==='—') return '—';
+  var p=v.split('-');
+  if(p.length<3) return v;
+  var mn=lang==='en'?['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']:['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return lang==='en' ? mn[parseInt(p[1])-1]+' '+p[2]+', '+p[0] : p[2]+' de '+mn[parseInt(p[1])-1]+' de '+p[0];
+}
+function updReport(){
+  document.getElementById('rp-nro').textContent=nroReg();
+  var fEl=document.getElementById('f-fecha');
+  document.getElementById('rp-fecha-hdr').textContent=fmtF(fEl?fEl.value:'');
+  ['marca','cliente','molde','op'].forEach(function(k){var el=document.getElementById('rp-'+k);if(el)el.textContent=gv('f-'+k);});
+  document.getElementById('rp-inspector').textContent=gv('f-inspector');
+  document.getElementById('rp-ref').textContent=gv('f-ref');
+  document.getElementById('rp-desc').textContent=gv('f-desc');
+  var fs=document.getElementById('f-fase');
+  document.getElementById('rp-fase').textContent=fs?fs.options[fs.selectedIndex].text:'—';
+  document.getElementById('rp-imgs').textContent=KEYS.filter(function(k){return imgs[k];}).length+'/4';
+  // dim
+  var fd=DIMS.filter(function(r){return r.nom&&r.med;});
+  var dimEl=document.getElementById('rp-dim');
+  if(fd.length){
+    var tbl='<table class="dim-tbl"><thead><tr><th>#</th><th>'+(lang==='en'?'Desc':'Descripción')+'</th><th>Nominal</th><th>Tol.±</th><th>'+(lang==='en'?'Measured':'Medido')+'</th><th>'+(lang==='en'?'Dev.':'Desvío')+'</th><th>'+(lang==='en'?'Status':'Estado')+'</th></tr></thead><tbody>';
+    DIMS.forEach(function(r,i){
+      if(!r.nom||!r.med) return;
+      var dev=parseFloat(r.med)-parseFloat(r.nom),tol=parseFloat(r.tol)||.3;
+      var ok=Math.abs(dev)<=tol,warn=Math.abs(dev)<=tol*1.5;
+      var cls=ok?'s-ok':warn?'s-warn':'s-fail';
+      var sta=ok?'✓ OK':warn?'⚠ WARN':'✗ FAIL';
+      tbl+='<tr><td>'+(i+1)+'</td><td>'+(r.desc||'—')+'</td><td>'+r.nom+'</td><td>'+tol+'</td><td>'+r.med+'</td><td class="'+cls+'">'+(dev>=0?'+':'')+dev.toFixed(3)+'</td><td class="'+cls+'">'+sta+'</td></tr>';
+    });
+    tbl+='</tbody></table>';
+    dimEl.innerHTML=tbl;
+  } else {
+    dimEl.innerHTML='<p style="font-size:12px;color:#aaa;font-style:italic;">'+(lang==='en'?'No measurements entered.':'Sin mediciones ingresadas.')+'</p>';
+  }
+  // finish
+  var finT=[];
+  if(document.getElementById('fin-apholos')&&document.getElementById('fin-apholos').checked) finT.push('APHOLOS: '+gv('f-aph'));
+  if(document.getElementById('fin-pantone')&&document.getElementById('fin-pantone').checked)  finT.push('Pantone: '+gv('f-pan'));
+  if(document.getElementById('fin-kurz')&&document.getElementById('fin-kurz').checked)        finT.push('Kurz: '+gv('f-kurz'));
+  if(document.getElementById('fin-wood')&&document.getElementById('fin-wood').checked)        finT.push((lang==='en'?'Wood':'Madera')+': '+gv('f-wood'));
+  var finOK=FIN_ITEMS.filter(function(f){var el=document.getElementById(f.id);return el&&el.checked;}).map(function(f){return lang==='en'?f.en:f.es;});
+  var finObs=gv('fin-obs');
+  var fh='';
+  if(finT.length) fh+='<div class="rp-row"><span class="k">'+(lang==='en'?'Finish type':'Tipo de acabado')+'</span><span class="v">'+finT.join(' · ')+'</span></div>';
+  fh+='<div class="rp-row"><span class="k">'+(lang==='en'?'Checklist OK':'Checklist aprobado')+'</span><span class="v" style="font-size:11px;text-align:right;">'+(finOK.length?finOK.join(', '):'—')+'</span></div>';
+  if(finObs!=='—') fh+='<div style="margin-top:8px;font-size:12px;color:#555;">'+finObs+'</div>';
+  document.getElementById('rp-fin').innerHTML=fh||'<p style="font-size:12px;color:#aaa;font-style:italic;">Sin datos.</p>';
+  // AI
+  if(lastAI){
+    var h=lastAI.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br/>');
+    var aiEl=document.getElementById('rp-ai');
+    if(aiEl){aiEl.innerHTML=h; aiEl.style.fontStyle='normal';}
+  }
+  var vp=document.getElementById('rp-verd');
+  var VM={
+    rejected:'<div class="verd v-err"><i class="ti ti-x" style="font-size:20px;"></i><div><div class="vt">'+(lang==='en'?'Part rejected':'Pieza rechazada')+'</div></div></div>',
+    observations:'<div class="verd v-warn"><i class="ti ti-alert-triangle" style="font-size:20px;"></i><div><div class="vt">'+(lang==='en'?'Approved with observations':'Aprobado con observaciones')+'</div></div></div>',
+    approved:'<div class="verd v-ok"><i class="ti ti-circle-check" style="font-size:20px;"></i><div><div class="vt">'+(lang==='en'?'Part approved':'Pieza aprobada')+'</div></div></div>'
+  };
+  if(vp) vp.innerHTML=VM[lastVerdict]||'';
+  // obs
+  var obs=(document.getElementById('obs')||{value:''}).value;
+  var obsCard=document.getElementById('rp-obs-card');
+  var obsTxt=document.getElementById('rp-obs-txt');
+  if(obs&&obs.trim()){
+    if(obsCard) obsCard.style.display='block';
+    if(obsTxt)  obsTxt.innerHTML=obs.replace(/\n/g,'<br/>');
+  } else {
+    if(obsCard) obsCard.style.display='none';
+  }
+}
+function printRp(){ updReport(); window.print(); }
+function cpRp(){
+  var txt='APHOLOS — '+(lang==='en'?'QC RECORD':'REGISTRO CQ')+
+    '\nN°: '+nroReg()+
+    '\n'+(lang==='en'?'Brand':'Marca')+': '+gv('f-marca')+' | '+(lang==='en'?'Client':'Cliente')+': '+gv('f-cliente')+
+    '\n'+(lang==='en'?'Mold':'Molde')+': '+gv('f-molde')+' | OP: '+gv('f-op')+
+    '\nRef: '+gv('f-ref')+' | '+gv('f-desc')+
+    '\n\n'+(lang==='en'?'AI ANALYSIS:':'ANÁLISIS IA:')+'\n'+(lastAI||'—')+
+    '\n\n'+(lang==='en'?'OBSERVATIONS:':'OBSERVACIONES:')+'\n'+((document.getElementById('obs')||{value:''}).value||'—');
+  navigator.clipboard.writeText(txt).then(function(){toast(lang==='en'?'Copied to clipboard':'Copiado al portapapeles');});
+}
+
+// ── LANGUAGE ──
+var TR={
+  es:{'hdr-sub':'Control de Calidad','t-record':'Datos del registro','l-marca':'Marca','l-cliente':'Cliente','l-molde':'N° molde','l-op':'N° orden producción','l-ref':'Referencia','l-desc':'Descripción','l-fecha':'Fecha','l-insp':'Inspector','l-fase':'Fase','l-dz-design':'Diseño 2D','l-dz-design-s':'Arte original','l-dz-design-b':'Referencia','l-dz-mold':'Foto de molde','l-dz-mold-s':'Espejado auto · opcional','l-dz-mold-b':'Opcional','l-dz-injected':'Producto inyectado','l-dz-injected-s':'Pieza cruda','l-dz-final':'Producto final','l-dz-final-s':'Terminado / acabado','t-go-cmp':'Ver comparación ↗','t-clear':'Limpiar todo','tab-upload':'Imágenes','tab-compare':'Comparar','tab-dim':'Dimensional','tab-finish':'Acabados','tab-analysis':'Análisis IA','tab-report':'Reporte','pill-pre':'Pre-producción','pill-post':'Post-producción','t-ov-ttl':'OVERLAY MULTICAPA','t-ov-empty':'Cargá imágenes para ver el overlay','t-layers':'Capas — activar y ajustar','t-go-ai':'Analizar con IA ↗','t-exp':'Exportar overlay','t-dim-ttl':'Control dimensional','t-dim-hint':'Tolerancia estándar: ±0.3 mm (ingeniería). Ingresá nominal y medido con calibre.','th-desc':'Descripción','th-nom':'Nominal (mm)','th-tol':'Tol. ±','th-med':'Medido (mm)','th-dev':'Desvío','th-sta':'Estado','t-calc':'Calcular desvíos','t-clr-dim':'Limpiar','t-caliper-ttl':'Foto con calibre (opcional)','t-fin-ttl':'Control de acabados','t-fin-type':'Tipo de acabado','l-fin-aph':'Carta APHOLOS','l-fin-aph-c':'Código','l-fin-kurz-c':'Referencia','l-fin-wood':'Madera','l-fin-wood-c':'Especie / Código','t-fin-chk':'Checklist de acabado','t-fin-ref':'Imagen de referencia de color','l-fin-obs':'Observaciones de acabado','t-m1':'Imágenes','t-m1s':'cargadas','t-m2':'Fase','t-m3':'Cotas OK','t-m3s':'de 4','t-m4':'Análisis','t-verif':'Verificación','t-ai-ttl':'Análisis IA','t-ai-pend':'Análisis pendiente','t-ai-hint':'Cargá imágenes y ejecutá el análisis.','t-run':'Ejecutar análisis IA','t-print':'Imprimir / Guardar PDF','t-copy':'Copiar texto','t-edit':'Editar','t-pdf-hint':'Imprimir → Guardar como PDF → subir a Google Drive.','rp-sub':'Registro de Control de Calidad','rp-nro-lbl':'N° registro','rp-l-marca':'Marca','rp-l-cliente':'Cliente','rp-l-insp':'Inspector','rp-l-molde':'N° molde','rp-l-fase':'Fase','rp-l-ref':'Referencia','rp-l-desc':'Descripción','rp-l-imgs':'Imágenes cargadas','rp-l-dim':'Control dimensional','rp-l-fin':'Control de acabados','rp-l-ai':'Resultado análisis IA','rp-l-obs':'Observaciones adicionales','t-api-ttl':'API Key de Anthropic (para análisis IA)','t-api-hint':'Se guarda en tu navegador. Obtené la tuya en console.anthropic.com → API Keys','t-api-save':'Guardar','t-api-clear':'Quitar','o-pre':'Pre-producción','o-post':'Post-producción','o-both':'Ambas fases'},
+  en:{'hdr-sub':'Quality Control','t-record':'Record data','l-marca':'Brand','l-cliente':'Client','l-molde':'Mold No.','l-op':'Production order No.','l-ref':'Reference','l-desc':'Description','l-fecha':'Date','l-insp':'Inspector','l-fase':'Phase','l-dz-design':'2D Design','l-dz-design-s':'Original artwork','l-dz-design-b':'Reference','l-dz-mold':'Mold photo','l-dz-mold-s':'Auto-mirrored · optional','l-dz-mold-b':'Optional','l-dz-injected':'Injected product','l-dz-injected-s':'Raw part','l-dz-final':'Final product','l-dz-final-s':'Finished / coated','t-go-cmp':'View comparison ↗','t-clear':'Clear all','tab-upload':'Images','tab-compare':'Compare','tab-dim':'Dimensional','tab-finish':'Finish','tab-analysis':'AI Analysis','tab-report':'Report','pill-pre':'Pre-production','pill-post':'Post-production','t-ov-ttl':'MULTILAYER OVERLAY','t-ov-empty':'Load images to see overlay','t-layers':'Layers — toggle & adjust','t-go-ai':'AI Analysis ↗','t-exp':'Export overlay','t-dim-ttl':'Dimensional check','t-dim-hint':'Standard tolerance: ±0.3 mm (engineering). Enter nominal and caliper-measured values.','th-desc':'Description','th-nom':'Nominal (mm)','th-tol':'Tol. ±','th-med':'Measured (mm)','th-dev':'Deviation','th-sta':'Status','t-calc':'Calculate deviations','t-clr-dim':'Clear','t-caliper-ttl':'Photo with caliper (optional)','t-fin-ttl':'Finish check','t-fin-type':'Finish type','l-fin-aph':'APHOLOS chart','l-fin-aph-c':'Code','l-fin-kurz-c':'Reference','l-fin-wood':'Wood','l-fin-wood-c':'Species / Code','t-fin-chk':'Finish checklist','t-fin-ref':'Color reference image','l-fin-obs':'Finish observations','t-m1':'Images','t-m1s':'loaded','t-m2':'Phase','t-m3':'Dims OK','t-m3s':'of 4','t-m4':'Analysis','t-verif':'Checklist','t-ai-ttl':'AI Analysis','t-ai-pend':'Analysis pending','t-ai-hint':'Load images and run the analysis.','t-run':'Run AI analysis','t-print':'Print / Save PDF','t-copy':'Copy text','t-edit':'Edit','t-pdf-hint':'Print → Save as PDF → upload to Google Drive.','rp-sub':'Quality Control Record','rp-nro-lbl':'Record No.','rp-l-marca':'Brand','rp-l-cliente':'Client','rp-l-insp':'Inspector','rp-l-molde':'Mold No.','rp-l-fase':'Phase','rp-l-ref':'Reference','rp-l-desc':'Description','rp-l-imgs':'Images loaded','rp-l-dim':'Dimensional check','rp-l-fin':'Finish check','rp-l-ai':'AI analysis result','rp-l-obs':'Additional observations','t-api-ttl':'Anthropic API Key (for AI analysis)','t-api-hint':'Saved in your browser. Get yours at console.anthropic.com → API Keys','t-api-save':'Save','t-api-clear':'Remove','o-pre':'Pre-production','o-post':'Post-production','o-both':'Both phases'}
+};
+function setLang(l,btn){
+  lang=l;
+  document.querySelectorAll('.lang button').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  Object.keys(TR[l]).forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.textContent=TR[l][id];
+  });
+  updCL();
+}
+
+// ── INIT ──
+document.getElementById('f-fecha').value = new Date().toISOString().split('T')[0];
+buildDimTable();
+updCL();
+</script>
+</body>
+</html>
