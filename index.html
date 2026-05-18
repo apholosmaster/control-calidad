@@ -74,7 +74,7 @@ input[type=checkbox]{width:14px;height:14px;accent-color:#111;cursor:pointer;fle
 .section-include{display:flex;align-items:center;gap:5px;margin-left:auto;font-size:11px;color:#888;}
 
 /* DROP ZONES */
-.dz-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.dz-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
 .dz-wrap{background:#fff;border:1px solid #e0ddd8;border-radius:10px;padding:10px;}
 .dz-head{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
 .dz-head .t{font-size:12px;font-weight:600;}.dz-head .s{font-size:10px;color:#888;}
@@ -99,7 +99,7 @@ input[type=checkbox]{width:14px;height:14px;accent-color:#111;cursor:pointer;fle
 .ov-box canvas{display:block;width:100%;height:100%;}
 .ov-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#aaa;font-size:12px;}
 .ov-empty i{font-size:26px;}
-.thumbs-2x2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
+.thumbs-2x2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;}
 .th-cell{display:flex;flex-direction:column;}
 .th-box{background:#e8e5df;border-radius:6px;aspect-ratio:1/1;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid #ddd;}
 .th-box img{width:100%;height:100%;object-fit:contain;}
@@ -395,7 +395,8 @@ var CANV = 600;
 var BLENDS = ['source-over','screen','multiply','overlay','difference'];
 var COLORS = ['normal','red','green','blue','sepia','outline-red','outline-black'];
 var CCSS = {normal:null,red:'rgba(200,57,26,.75)',green:'rgba(45,106,63,.75)',blue:'rgba(12,61,122,.75)',sepia:'rgba(120,80,20,.65)'};
-var SLOT_KEYS = ['design','mold','injected','final'];
+var SLOT_KEYS = ['design','mold','render1','render2','injected','final']; // all slots
+var OV_KEYS = ['design','mold','injected','final']; // overlay only (no renders - perspective differs)
 var sectionCounter = 0;
 // drag state per section
 var drags = {};
@@ -448,18 +449,24 @@ function newSection(name){
     LS:{
       design:{vis:true,opa:70,blend:'screen',color:'red',bgTol:40},
       mold:{vis:true,opa:80,blend:'source-over',color:'normal',bgTol:40},
+      render1:{vis:true,opa:80,blend:'source-over',color:'normal',bgTol:40},
+      render2:{vis:true,opa:80,blend:'source-over',color:'normal',bgTol:40},
       injected:{vis:true,opa:100,blend:'source-over',color:'normal',bgTol:40},
       final:{vis:true,opa:100,blend:'source-over',color:'normal',bgTol:40}
     },
     TX:{
       design:{sx:100,sy:100,rot:0,x:0,y:0},
       mold:{sx:100,sy:100,rot:0,x:0,y:0},
+      render1:{sx:100,sy:100,rot:0,x:0,y:0},
+      render2:{sx:100,sy:100,rot:0,x:0,y:0},
       injected:{sx:100,sy:100,rot:0,x:0,y:0},
       final:{sx:100,sy:100,rot:0,x:0,y:0}
     },
     bgRemoval:{
       design:{enabled:false,tol:40,color:'white'},
       mold:{enabled:false,tol:40,color:'white'},
+      render1:{enabled:false,tol:40,color:'white'},
+      render2:{enabled:false,tol:40,color:'white'},
       injected:{enabled:false,tol:40,color:'white'},
       final:{enabled:false,tol:40,color:'white'}
     },
@@ -506,7 +513,9 @@ function renderUploadSection(sec){
       '<div class="dz-grid">'+
         mkDzHtml(sec,'design','Diseño 2D','Arte original','b-blue','Referencia','ti-file-vector',false)+
         mkDzHtml(sec,'mold','Foto de molde','Espejado auto · opcional','b-amber','Opcional','ti-device-imac',true)+
-        mkDzHtml(sec,'injected','Producto inyectado','Pieza cruda','b-amber','Pre-prod','ti-package',false)+
+        mkDzHtml(sec,'render1','Render 3D — Vista 1','Modelado volumétrico · opcional','b-blue','Render 1','ti-cube',false)+
+        mkDzHtml(sec,'render2','Render 3D — Vista 2','Modelado volumétrico · opcional','b-blue','Render 2','ti-cube-3d',false)+
+        mkDzHtml(sec,'injected','Producto inyectado','Pieza cruda pre-prod','b-amber','Pre-prod','ti-package',false)+
         mkDzHtml(sec,'final','Producto final','Terminado / acabado','b-green','Post-prod','ti-award',false)+
       '</div>'+
     '</div>';
@@ -542,7 +551,7 @@ function selZone(sid,key){
   if(h)h.textContent='Zona activa: '+NMS[key]+' ('+getSectionName(sid)+')';
 }
 function getSectionName(sid){var s=getSection(sid);return s?s.name:sid;}
-var NMS={design:'Diseño 2D',mold:'Molde',injected:'Inyectado',final:'Final'};
+var NMS={design:'Diseño 2D',mold:'Molde',render1:'Render 1',render2:'Render 2',injected:'Inyectado',final:'Final'};
 
 // ── PASTE ──
 document.addEventListener('paste',function(e){
@@ -736,6 +745,7 @@ function renderCmpSection(sec){
   thumbRow.innerHTML=
     '<div class="thumbs-2x2" id="thumbs-'+sec.id+'">'+
       mkThumb(sec,'design','Diseño 2D')+mkThumb(sec,'mold','Molde')+
+      mkThumb(sec,'render1','Render 1')+mkThumb(sec,'render2','Render 2')+
       mkThumb(sec,'injected','Inyectado')+mkThumb(sec,'final','Final')+
     '</div>';
   body.appendChild(thumbRow);
@@ -810,7 +820,7 @@ function mkThumb(sec,key,lbl){
 function buildEditBtns(sec){
   var el=document.getElementById('edit-btns-'+sec.id);if(!el)return;
   el.innerHTML='';
-  SLOT_KEYS.forEach(function(key){
+  OV_KEYS.forEach(function(key){
     if(!sec.imgs[key])return;
     var btn=document.createElement('button');
     btn.className='btn xs'+(sec.editLayer===key?' pri':'');
@@ -880,7 +890,7 @@ function clearFirma(sid){
 function buildLayerControls(sec){
   var container=document.getElementById('layers-'+sec.id);if(!container)return;
   container.innerHTML='';
-  SLOT_KEYS.forEach(function(key){
+  OV_KEYS.forEach(function(key){
     var l=sec.LS[key];var t=sec.TX[key];var sid=sec.id;
     var isOpen=sec.editLayer===key;
     container.innerHTML+=
@@ -931,7 +941,7 @@ function toggleLayerCtrl(sid,key){
   var lrc=document.getElementById('lrc-'+sid+'-'+key);
   var isCurrentlyOpen=lrc&&lrc.classList.contains('open');
   // Close ALL
-  SLOT_KEYS.forEach(function(k){
+  OV_KEYS.forEach(function(k){
     var other=document.getElementById('lrc-'+sid+'-'+k);
     var oc=document.getElementById('chev-'+sid+'-'+k);
     if(other)other.classList.remove('open');
@@ -1084,7 +1094,7 @@ function drawOv(sid){
   var W=CANV,H=CANV;
   var ctx=canvas.getContext('2d');
   ctx.clearRect(0,0,W,H);ctx.fillStyle='#e8e5df';ctx.fillRect(0,0,W,H);
-  var order=['injected','final','mold','design'];
+  var order=['injected','final','mold','design']; // OV_KEYS reverse (bottom to top)
   var hasAny=order.some(function(k){return sec.imgs[k]&&sec.LS[k].vis;});
   if(!hasAny){canvas.style.display='none';if(empty)empty.style.display='flex';return;}
   canvas.style.display='block';if(empty)empty.style.display='none';
@@ -1211,7 +1221,7 @@ function ovUp(sid){var d=drags[sid];if(d)d.active=false;}
 // ── AUTO FIT ──
 function autoFit(sid){
   var sec=getSection(sid);if(!sec)return;
-  SLOT_KEYS.forEach(function(k){sec.TX[k]={sx:100,sy:100,rot:0,x:0,y:0};});
+  OV_KEYS.forEach(function(k){sec.TX[k]={sx:100,sy:100,rot:0,x:0,y:0};});
   var baseKey=null;
   ['injected','final','mold','design'].forEach(function(k){if(!baseKey&&sec.imgs[k])baseKey=k;});
   if(!baseKey){toast('Cargá al menos una imagen.');return;}
@@ -1301,7 +1311,7 @@ function buildPrintHTML(sectionIds){
     '.ov-wrap{}'+
     '.ov-lbl{font-size:8px;font-weight:600;color:#888;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;}'+
     '.ov-img{width:100%;display:block;border-radius:6px;border:1px solid #e0ddd8;}'+
-    '.thumbs{display:grid;grid-template-columns:1fr 1fr;gap:5px;}'+
+    '.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:5px;}'+
     '.th-lbl{font-size:8px;color:#888;margin-bottom:2px;}'+
     '.th-box{background:#eee;border-radius:4px;aspect-ratio:1/1;overflow:hidden;'+
       'display:flex;align-items:center;justify-content:center;border:1px solid #ddd;}'+
@@ -1377,9 +1387,10 @@ function buildPrintHTML(sectionIds){
             '<div class="ov-lbl">Imágenes</div>'+
             '<div class="thumbs">'+
               SLOT_KEYS.map(function(key){
+                if(!sec.imgs[key])return ''; // skip empty slots in print
                 return '<div>'+
                   '<div class="th-lbl">'+NMS[key]+'</div>'+
-                  '<div class="th-box">'+(sec.imgs[key]?'<img src="'+sec.imgs[key]+'" alt="'+NMS[key]+'"/>':'')+'</div>'+
+                  '<div class="th-box"><img src="'+sec.imgs[key]+'" alt="'+NMS[key]+'"/></div>'+
                 '</div>';
               }).join('')+
             '</div>'+
@@ -1516,18 +1527,57 @@ async function doAI(){
     var vdict=s.verdict?{pass:'PASA',fail:'NO PASA',obs:'CON OBSERVACIONES'}[s.verdict]:'sin veredicto';
     return (i+1)+'. '+s.name+': imágenes=['+imgs.join(',')+'] veredicto='+vdict+(s.observations?' obs="'+s.observations+'"':'');
   }).join('\n');
-  var prompt=lang==='en'?
-    'Expert QC at APHOLOS. Product: '+gv('f-ref')+' - '+gv('f-desc')+'\nSections:\n'+secDesc+'\nProvide overall QC assessment with recommendation. English, technical, concise.'
-    :'Experto CQ en APHOLOS. Producto: '+gv('f-ref')+' - '+gv('f-desc')+'\nSecciones:\n'+secDesc+'\nGenerá evaluación global de CQ con recomendación. Español, técnico, conciso. Veredicto final: APROBADO / APROBADO CON OBSERVACIONES / RECHAZADO.';
+  var hasRender = sections.some(function(s){return s.imgs.render1||s.imgs.render2;});
+  var prompt = lang==='en' ?
+    'You are a zamak injection quality control expert at APHOLOS, specialized in badges and medals.\n'+
+    'Product: '+gv('f-ref')+' — '+gv('f-desc')+'\n'+
+    'Mold: '+gv('f-molde')+' | Order: '+gv('f-op')+'\n'+
+    'Sections analyzed:\n'+secDesc+'\n\n'+
+    'IMPORTANT CONTEXT:\n'+
+    '- The 2D design is flat. The mold adds 3D volumetry — this is NOT a defect.\n'+
+    '- The mold IS mirror-inverted by design — evaluate if inversion is correct.\n'+
+    (hasRender?'- 3D renders are available — use them as primary reference for volumetry and final appearance.\n':'')+
+    '- Zamak tolerance: ~0.3mm for general dimensions.\n\n'+
+    'For each section analyze:\n'+
+    '1. 2D Design → Mold: Did the mold correctly copy the 2D? Check typography letter by letter, fine details, proportions. Note the mold must be mirror-inverted.\n'+
+    '2. Mold → Injected part: Did injection correctly reproduce the mold? Check missing details, deformations, flash/burrs.\n'+
+    '3. 2D/Render → Final part: Overall fidelity. If render available, prioritize render comparison.\n'+
+    '4. Specific defects: missing/wrong letters, deformed typography, missing details, dimensional failures, surface defects (bubbles, scratches, sink marks).\n\n'+
+    'Be SPECIFIC: name exact problems found (e.g. "letter A missing in APHOLOS", "star detail not transferred to mold", "left side shows 0.5mm flash").\n'+
+    'PROPOSED VERDICT: APPROVED / APPROVED WITH OBSERVATIONS (list each) / REJECTED (state reason).'
+    :
+    'Sos experto en control de calidad de piezas de zamak inyectado en APHOLOS, especializado en insignias y medallas.\n'+
+    'Producto: '+gv('f-ref')+' — '+gv('f-desc')+'\n'+
+    'Molde: '+gv('f-molde')+' | Orden: '+gv('f-op')+'\n'+
+    'Secciones analizadas:\n'+secDesc+'\n\n'+
+    'CONTEXTO IMPORTANTE:\n'+
+    '- El diseño 2D es plano. El molde agrega volumetría 3D — esto NO es un defecto.\n'+
+    '- El molde ES una imagen espejada por diseño — evaluá si el espejado fue correctamente aplicado.\n'+
+    (hasRender?'- Hay renders 3D disponibles — usarlos como referencia principal para volumetría y apariencia final.\n':'')+
+    '- Tolerancia zamak: ~0.3mm para medidas generales.\n\n'+
+    'Por cada sección analizá:\n'+
+    '1. Diseño 2D → Molde: ¿El molde copió correctamente el 2D? Verificá tipografía letra por letra, detalles finos, proporciones. El molde debe ser espejo del 2D.\n'+
+    '2. Molde → Pieza inyectada: ¿La inyección reprodujo correctamente el molde? Fijate en detalles faltantes, deformaciones, rebabas.\n'+
+    '3. Diseño 2D / Render → Pieza final: Fidelidad general. Si hay render disponible, priorizá esa comparación.\n'+
+    '4. Defectos específicos: letras faltantes o incorrectas, tipografía deformada, detalles no transferidos, fallas dimensionales, defectos de superficie (burbujas, rayaduras, rechupes).\n\n'+
+    'Sé ESPECÍFICO: nombrá exactamente el problema encontrado (ej: "falta la letra A en APHOLOS", "el detalle de la estrella no se transfirió al molde", "rebaba de 0.5mm en lado izquierdo").\n'+
+    'VEREDICTO PROPUESTO: APROBADO / APROBADO CON OBSERVACIONES (listá cada una) / RECHAZADO (indicá motivo).';
+
+  // Build content array with all images in logical order
   var content=[];
+  var imgOrder=['design','render1','render2','mold','injected','final'];
   sections.forEach(function(s){
-    SLOT_KEYS.forEach(function(k){
-      if(s.imgs[k])content.push({type:'image',source:{type:'base64',media_type:'image/png',data:s.imgs[k].split(',')[1]}});
+    imgOrder.forEach(function(k){
+      if(s.imgs[k]){
+        var b64=s.imgs[k].split(',')[1];
+        if(b64)content.push({type:'image',source:{type:'base64',media_type:'image/png',data:b64}});
+      }
     });
   });
   content.push({type:'text',text:prompt});
+
   try{
-    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:content}]})});
+    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:content}]})});
     var data=await res.json();
     if(data.error){box.innerHTML='<div class="ai-hd"><i class="ti ti-alert-triangle" style="font-size:14px;color:#c8391a;"></i><span style="font-size:12px;font-weight:600;">Error API</span></div><div class="ai-body" style="color:#c8391a;">'+data.error.message+'</div>';return;}
     var txt=(data.content||[]).map(function(c){return c.text||'';}).join('\n')||'Sin respuesta.';
