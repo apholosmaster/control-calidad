@@ -320,7 +320,8 @@ input[type=checkbox]{width:14px;height:14px;accent-color:#111;cursor:pointer;fle
   <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center;flex-wrap:wrap;" class="no-print">
     <button class="pill on" id="pill-pre" onclick="setPhase('pre',this)">Pre-producción</button>
     <button class="pill" id="pill-post" onclick="setPhase('post',this)">Post-producción</button>
-    <button class="btn xs" onclick="printAll()" style="margin-left:auto;"><i class="ti ti-printer"></i><span id="t-print-all">Imprimir todo</span></button>
+    <button class="btn xs" onclick="printAll()" style="margin-left:auto;"><i class="ti ti-printer"></i><span id="t-print-all">Imprimir secciones</span></button>
+    <button class="btn xs" onclick="printAllWithReport()"><i class="ti ti-file-text"></i><span>Imprimir todo + reporte</span></button>
     <button class="btn xs" onclick="showPrintSelector()"><i class="ti ti-list-check"></i><span id="t-print-sel">Elegir secciones</span></button>
   </div>
   <!-- Print selector -->
@@ -379,6 +380,7 @@ input[type=checkbox]{width:14px;height:14px;accent-color:#111;cursor:pointer;fle
     <div class="rp-row"><span class="k" id="rp-l-ref">Referencia</span><span class="v" id="rp-ref">—</span></div>
     <div class="rp-row"><span class="k" id="rp-l-desc">Descripción</span><span class="v" id="rp-desc">—</span></div>
   </div>
+  <div class="card"><div class="ct"><i class="ti ti-list-check"></i><span id="rp-l-sec">Resultado por sección</span></div><div id="rp-sec-verdicts"><p style="font-size:12px;color:#aaa;font-style:italic;">Sin secciones.</p></div></div>
   <div class="card"><div class="ct"><i class="ti ti-brain"></i><span id="rp-l-ai">Resultado análisis IA</span></div><div id="rp-ai" class="ai-body" style="font-style:italic;color:#aaa;">Sin análisis ejecutado.</div><div id="rp-verd"></div></div>
   <div class="card no-print"><div class="ct"><i class="ti ti-notes"></i><span id="rp-l-obs">Observaciones generales</span></div><textarea id="obs" placeholder="Notas generales del control..."></textarea></div>
   <div id="rp-obs-card" style="display:none;" class="card"><div class="ct"><i class="ti ti-notes"></i>Observaciones</div><div id="rp-obs-txt" class="ai-body"></div></div>
@@ -1237,9 +1239,22 @@ function ovMove(e,sid){
     t.x=d.startTX.x+dx;t.y=d.startTX.y+dy;
   }else if(d.type==='scale'){
     var b=getLayerBounds(sec,sec.editLayer);
-    var od=Math.sqrt(Math.pow(d.startX-b.cx,2)+Math.pow(d.startY-b.cy,2));
-    var nd=Math.sqrt(Math.pow(pos.x-b.cx,2)+Math.pow(pos.y-b.cy,2));
-    if(od>5){var ratio=nd/od;t.sx=Math.max(5,Math.round(d.startTX.sx*ratio));t.sy=Math.max(5,Math.round(d.startTX.sy*ratio));}
+    // Pivot = opposite corner stays fixed
+    var pivotX=b.cx, pivotY=b.cy;
+    if(d.corner==='tl'){pivotX=b.cx+b.hw; pivotY=b.cy+b.hh;}
+    else if(d.corner==='tr'){pivotX=b.cx-b.hw; pivotY=b.cy+b.hh;}
+    else if(d.corner==='bl'){pivotX=b.cx+b.hw; pivotY=b.cy-b.hh;}
+    else if(d.corner==='br'){pivotX=b.cx-b.hw; pivotY=b.cy-b.hh;}
+    var od=Math.sqrt(Math.pow(d.startX-pivotX,2)+Math.pow(d.startY-pivotY,2));
+    var nd=Math.sqrt(Math.pow(pos.x-pivotX,2)+Math.pow(pos.y-pivotY,2));
+    if(od>5){
+      var ratio=nd/od;
+      t.sx=Math.max(5,Math.round(d.startTX.sx*ratio));
+      t.sy=Math.max(5,Math.round(d.startTX.sy*ratio));
+      // Reposition so pivot corner stays fixed
+      t.x=Math.round(pivotX+(d.startTX.x+CANV/2-pivotX)*ratio-CANV/2);
+      t.y=Math.round(pivotY+(d.startTX.y+CANV/2-pivotY)*ratio-CANV/2);
+    }
   }else if(d.type==='rotate'||d.corner==='rot'){
     var b2=getLayerBounds(sec,sec.editLayer);
     t.rot=Math.round(Math.atan2(pos.y-b2.cy,pos.x-b2.cx)*180/Math.PI+90);
@@ -1293,7 +1308,7 @@ function fmtFecha(v){
   return p[2]+' de '+mn[parseInt(p[1])-1]+' de '+p[0];
 }
 
-function buildPrintHTML(sectionIds){
+function buildPrintHTML(sectionIds, includeReport){
   var canvasImgs={};
   sectionIds.forEach(function(sid){
     var c=document.getElementById('cv-'+sid);
@@ -1438,9 +1453,27 @@ function buildPrintHTML(sectionIds){
         '<div class="verd-row">'+
           '<div class="v-btn '+verdClass+'">'+verdIcon+' '+verdTxt+'</div>'+
         '</div>'+
+        // Orientation result
+        (function(){
+          var oMap={ok:'✓ '+(lang==='en'?'Orientation correct':'Orientación correcta'),
+                    mirrored:'⟺ '+(lang==='en'?'MIRRORED — CRITICAL DEFECT':'ESPEJADA — DEFECTO CRÍTICO'),
+                    unchecked:'○ '+(lang==='en'?'Orientation not verified':'Orientación sin verificar')};
+          var oCol={ok:'#275010',mirrored:'#c8391a',unchecked:'#888'};
+          var ov=sec.orientation||'unchecked';
+          return '<div style="padding:5px 9px;background:'+(ov==='mirrored'?'#fdf0ec':ov==='ok'?'#eaf3de':'#f8f7f4')+';border-radius:6px;margin-bottom:6px;font-size:11px;font-weight:600;color:'+(oCol[ov]||'#888')+';border:1px solid '+(ov==='mirrored'?'#f2c4b5':ov==='ok'?'#c0dd97':'#e0ddd8')+'">'+(oMap[ov]||oMap.unchecked)+'</div>';
+        })()+
+        // Inspector verdict
+        (function(){
+          var vMap={pass:{bg:'#eaf3de',bd:'#c0dd97',col:'#275010',txt:lang==='en'?'✓ PASS':'✓ PASA'},
+                    fail:{bg:'#fdf0ec',bd:'#f2c4b5',col:'#c8391a',txt:lang==='en'?'✗ FAIL':'✗ NO PASA'},
+                    obs:{bg:'#fdf4e3',bd:'#f0d08a',col:'#7a4f00',txt:lang==='en'?'⚠ WITH OBSERVATIONS':'⚠ CON OBSERVACIONES'}};
+          var v=vMap[sec.verdict];
+          if(!v)return '';
+          return '<div style="padding:6px 10px;background:'+v.bg+';border:1.5px solid '+v.bd+';border-radius:6px;margin-bottom:6px;font-size:12px;font-weight:700;color:'+v.col+';">'+v.txt+'</div>';
+        })()+
         // Observations
         (sec.observations&&sec.observations.trim()?
-          '<div class="obs-box"><div class="obs-lbl">Observaciones</div>'+sec.observations.split('\n').join('<br/>')+'</div>':'')+
+          '<div class="obs-box"><div class="obs-lbl">'+(lang==='en'?'Observations':'Observaciones')+'</div>'+sec.observations.split('\n').join('<br/>')+'</div>':'')+
         // Firma
         '<div class="firma-area">'+
           (sec.firma?
@@ -1451,18 +1484,69 @@ function buildPrintHTML(sectionIds){
     html+='</div>'; // .page
   });
 
+  // Optional: include full AI report page
+  if(includeReport&&lastAI){
+    var EN=lang==='en';
+    html+='<div class="page">';
+    // Header
+    html+=pageHeader(sections.length, EN?'AI Analysis Report — Inspector Results':'Reporte de Análisis IA — Resultados Inspector');
+
+    // Inspector section verdicts table
+    html+='<div style="margin-bottom:12px;">'+
+      '<div style="font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;">'+(EN?'Inspector Results by Section':'Resultados del Inspector por Sección')+'</div>';
+    sections.forEach(function(s,i){
+      var oMap={ok:'✓ '+(EN?'Correct':'Correcta'),mirrored:'⟺ '+(EN?'MIRRORED':'ESPEJADA'),unchecked:'○ '+(EN?'Not verified':'Sin verificar')};
+      var oCol={ok:'#275010',mirrored:'#c8391a',unchecked:'#888'};
+      var vMap2={
+        pass:{bg:'#eaf3de',col:'#275010',txt:EN?'PASS':'PASA'},
+        fail:{bg:'#fdf0ec',col:'#c8391a',txt:EN?'FAIL':'NO PASA'},
+        obs:{bg:'#fdf4e3',col:'#7a4f00',txt:EN?'WITH OBSERVATIONS':'CON OBSERVACIONES'}
+      };
+      var ov=s.orientation||'unchecked';
+      var vr=vMap2[s.verdict]||{bg:'#f8f7f4',col:'#888',txt:'—'};
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid #e0ddd8;border-radius:6px;margin-bottom:4px;">'+
+        '<div style="font-size:11px;font-weight:600;min-width:20px;">'+(i+1)+'.</div>'+
+        '<div style="font-size:12px;font-weight:600;flex:1;">'+s.name+'</div>'+
+        '<div style="font-size:10px;font-weight:600;color:'+(oCol[ov]||'#888')+';white-space:nowrap;">'+(oMap[ov]||oMap.unchecked)+'</div>'+
+        '<div style="font-size:11px;font-weight:700;padding:3px 9px;background:'+vr.bg+';color:'+vr.col+';border-radius:5px;white-space:nowrap;">'+vr.txt+'</div>'+
+        (s.observations?'<div style="font-size:10px;color:#555;flex:1;text-align:right;">'+s.observations+'</div>':'')+
+      '</div>';
+    });
+    html+='</div>';
+
+    // AI Analysis result
+    if(typeof lastAI==='string'){
+      var tl=lastAI.toLowerCase();
+      var verdTxt=EN?'Pending':'Pendiente';
+      var verdBg='#f8f7f4';var verdCol='#888';
+      if(tl.includes('rechazado')||tl.includes('rejected')){verdTxt=EN?'REJECTED':'RECHAZADO';verdBg='#fdf0ec';verdCol='#c8391a';}
+      else if(tl.includes('observaciones')||tl.includes('observations')){verdTxt=EN?'APPROVED WITH OBSERVATIONS':'APROBADO CON OBSERVACIONES';verdBg='#fdf4e3';verdCol='#7a4f00';}
+      else if(tl.includes('aprobado')||tl.includes('approved')){verdTxt=EN?'APPROVED':'APROBADO';verdBg='#eaf3de';verdCol='#275010';}
+
+      html+='<div style="font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;">'+(EN?'AI Visual Pre-QC Analysis':'Análisis Visual Pre-CQ por IA')+'</div>'+
+        '<div style="background:'+verdBg+';border-radius:6px;padding:8px 12px;margin-bottom:8px;">'+
+          '<div style="font-size:14px;font-weight:700;color:'+verdCol+';">'+verdTxt+'</div>'+
+        '</div>'+
+        '<div style="font-size:11px;color:#333;line-height:1.6;white-space:pre-wrap;">'+
+          lastAI.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+
+        '</div>';
+    }
+
+    html+='</div>'; // .page
+  }
+
   html+='</body></html>';
   return html;
 }
 
-function doPrint(sectionIds){
+function doPrint(sectionIds, includeReport){
   // Draw all overlays and wait for async image loading to complete
   var pending = sectionIds.length;
   function onReady(){
     pending--;
     if(pending > 0) return;
     // All overlays rendered - now capture canvas as images
-    var html = buildPrintHTML(sectionIds);
+    var html = buildPrintHTML(sectionIds, includeReport);
     var iframe = document.getElementById('print-iframe');
     if(!iframe){
       iframe = document.createElement('iframe');
@@ -1497,6 +1581,10 @@ function doPrint(sectionIds){
 function printAll(){
   var ids=sections.map(function(s){return s.id;});
   doPrint(ids);
+}
+function printAllWithReport(){
+  var ids=sections.map(function(s){return s.id;});
+  doPrint(ids, true); // true = include report
 }
 function showPrintSelector(){
   var list=document.getElementById('print-selector-list');
@@ -1556,117 +1644,207 @@ function updMetrics(){
 // ── AI ANALYSIS ──
 async function doAI(){
   var apiKey=getKey();
-  if(!apiKey){toast('⚠ Ingresá tu API key');return;}
+  if(!apiKey){toast('⚠ '+(lang==='en'?'Enter your API key':'Ingresá tu API key'));return;}
+  var EN=lang==='en';
   var box=document.getElementById('ai-box');
-  box.innerHTML='<div class="ai-hd"><i class="ti ti-sparkles" style="font-size:14px;color:#888;"></i><span style="font-size:12px;font-weight:600;">'+(lang==='en'?'Analyzing':'Analizando')+'<span class="dots"></span></span><span class="ai-tag">Claude IA</span></div><div class="ai-body" style="font-style:italic;">'+(lang==='en'?'Processing...':'Procesando...')+'</div>';
+  box.innerHTML='<div class="ai-hd"><i class="ti ti-sparkles" style="font-size:14px;color:#888;"></i>'+
+    '<span style="font-size:12px;font-weight:600;">'+(EN?'Analyzing':'Analizando')+'<span class="dots"></span></span>'+
+    '<span class="ai-tag">Claude IA</span></div>'+
+    '<div class="ai-body" style="font-style:italic;">'+(EN?'Processing images...':'Procesando imágenes...')+'</div>';
   document.getElementById('verd-box').innerHTML='';
-  var secDesc=sections.map(function(s,i){
-    var imgs=SLOT_KEYS.filter(function(k){return s.imgs[k];}).map(function(k){return NMS[k];});
-    var vdict=s.verdict?{pass:'PASA',fail:'NO PASA',obs:'CON OBSERVACIONES'}[s.verdict]:'sin veredicto';
-    return (i+1)+'. '+s.name+': imágenes=['+imgs.join(',')+'] veredicto='+vdict+(s.observations?' obs="'+s.observations+'"':'');
-  }).join('\n');
-  var hasRender = sections.some(function(s){return s.imgs.render1||s.imgs.render2;});
 
-  var secDesc = sections.map(function(s,i){
-    var avail=[];
-    if(s.imgs.design)  avail.push('Diseño 2D');
-    if(s.imgs.mold)    avail.push('Molde (espejado)');
-    if(s.imgs.render1) avail.push('Render 1');
-    if(s.imgs.render2) avail.push('Render 2');
-    if(s.imgs.injected)avail.push('Pieza inyectada');
-    if(s.imgs.final)   avail.push('Pieza final terminada');
-    var vdict=s.verdict?{pass:'PASA',fail:'NO PASA',obs:'CON OBSERVACIONES'}[s.verdict]:'sin veredicto inspector';
-    var orientMap={'ok':'CORRECTA ✓','mirrored':'ESPEJADA ✗ (DEFECTO CRÍTICO)','unchecked':'sin verificar'};
-    var orient='Orientación: '+(orientMap[s.orientation]||'sin verificar');
-    var obs=s.observations?(' | obs="'+s.observations+'"'):'';
-    return (i+1)+'. '+s.name+': ['+avail.join(', ')+'] | '+orient+' | veredicto inspector='+vdict+obs;
-  }).join(' / ');
-
-  var prompt = lang==='en' ?
-    'You are a zamak injection quality control expert at APHOLOS, specialized in badges and medals.\n'+
-    'Product: '+gv('f-ref')+' — '+gv('f-desc')+' | Mold: '+gv('f-molde')+' | Order: '+gv('f-op')+'\n'+
-    'Sections: '+secDesc+'\n\n'+
-    '=== MANDATORY ORIENTATION VERIFICATION (DO THIS FIRST) ===\n'+
-    'Pick ONE asymmetric element in the design (e.g. a figure raising its RIGHT arm, text reading left-to-right, a logo facing right).\n'+
-    'Step 1: In the 2D design, describe the position of that element (e.g. "mermaid raises RIGHT arm").\n'+
-    'Step 2: In the injected/final part, describe the same element (e.g. "mermaid raises LEFT arm").\n'+
-    'Step 3: If they differ → THE PART IS MIRROR-INVERTED = CRITICAL DEFECT. State: "CRITICAL: Part is mirror-inverted vs 2D design."\n'+
-    'Step 4: If they match → orientation is correct.\n'+
-    'DO NOT skip this check. DO NOT assume orientation is correct without explicitly comparing.\n\n'+
-    '=== MOLD RULES ===\n'+
-    'The mold IS intentionally mirror-inverted vs the 2D — this is CORRECT and expected.\n'+
-    'The injected part comes OUT of the mold already flipped back → it MUST match the 2D orientation.\n'+
-    'The 2D is flat — mold adds 3D depth/volumetry — depth differences are NOT defects.\n'+
-    (hasRender?'3D renders available — use as primary reference for volumetry and final part appearance.\n':'')+
-    'If mold image is missing: skip 2D→Mold comparison, state "mold not available".\n\n'+
-    'ANALYSIS (only for available image pairs):\n'+
-    '1. ORIENTATION (mandatory, see above)\n'+
-    '2. Typography: every letter — missing, deformed, wrong spacing?\n'+
-    '3. Fine details: all design elements present in mold and injected part?\n'+
-    '4. Perimeter fidelity: overall shape match?\n'+
-    '5. Surface defects: flash/burrs, sink marks, bubbles, scratches\n'+
-    (hasRender?'6. Volumetry: render vs final part depth and relief\n':'')+
-    'Be SPECIFIC: name exact problems ("mermaid tail fin detail missing", "letter A deformed in APHOLOS").\n'+
-    'PROPOSED VERDICT: APPROVED / APPROVED WITH OBSERVATIONS (list each) / REJECTED (state exact reason).'
-    :
-    'Sos experto en control de calidad de piezas de zamak inyectado en APHOLOS, especializado en insignias y medallas.\n'+
-    'Producto: '+gv('f-ref')+' — '+gv('f-desc')+' | Molde: '+gv('f-molde')+' | Orden: '+gv('f-op')+'\n'+
-    'Secciones: '+secDesc+'\n\n'+
-    '=== ORIENTACIÓN (VERIFICADA POR EL INSPECTOR) ===\n'+
-    'El inspector verificó manualmente la orientación. Ver datos en descripción de secciones.\n'+
-    'Si orientación = ESPEJADA → defecto crítico confirmado → RECHAZADO.\n'+
-    'Si orientación = CORRECTA → tomar como confirmada, no re-analizar.\n'+
-    'Si orientación = sin verificar → indicar que falta verificación manual.\n\n'+
-    '=== REGLAS DEL MOLDE ===\n'+
-    'El molde ES intencionalmente espejado respecto al 2D — esto es CORRECTO y esperado.\n'+
-    'La pieza inyectada sale del molde ya invertida → DEBE coincidir con la orientación del 2D.\n'+
-    'El 2D es plano — el molde agrega profundidad/volumetría 3D — las diferencias de relieve NO son defectos.\n'+
-    (hasRender?'Hay renders 3D disponibles — usarlos como referencia principal de volumetría y apariencia final.\n':'')+
-    'Si falta imagen del molde: omitir comparación 2D→Molde, indicar "molde no disponible".\n\n'+
-    'ANÁLISIS (solo para pares de imágenes disponibles):\n'+
-    '1. ORIENTACIÓN (obligatorio, ver arriba)\n'+
-    '2. Tipografía: cada letra — ¿falta alguna, está deformada, espaciado incorrecto?\n'+
-    '3. Detalles finos: ¿todos los elementos del diseño están presentes en molde y pieza inyectada?\n'+
-    '4. Fidelidad de perímetro: ¿la forma general coincide?\n'+
-    '5. Defectos de superficie: rebabas, rechupes, burbujas, rayaduras\n'+
-    (hasRender?'6. Volumetría: ¿el render coincide con la profundidad y relieve de la pieza final?\n':'')+
-    'Sé ESPECÍFICO: nombrá exactamente el problema ("falta detalle de aleta de la cola de la sirena", "letra A deformada en APHOLOS").\n'+
-    'VEREDICTO PROPUESTO: APROBADO / APROBADO CON OBSERVACIONES (listá cada una) / RECHAZADO (indicá motivo exacto).';
-
-  // Send individual images only - overlay merges them and confuses orientation analysis
-  // Order: design first, then injected/final so Claude can compare them directly
-  var content=[];
+  // Build image content with labeled roles
+  var allContent=[];
   sections.forEach(function(s,si){
-    // Label each image with section name and type via text block
-    var imgOrder=['design','mold','render1','render2','injected','final'];
-    imgOrder.forEach(function(k){
-      if(s.imgs[k]){
-        // Add text label before each image so Claude knows what it is
-        content.push({type:'text',text:'Sección '+(si+1)+' - '+s.name+' | Imagen: '+NMS[k]+':'});
-        var b64=s.imgs[k].split(',')[1];
-        if(b64)content.push({type:'image',source:{type:'base64',media_type:'image/png',data:b64}});
-      }
-    });
+    allContent.push({type:'text',text:'=== '+(EN?'SECTION':'SECCIÓN')+' '+(si+1)+': '+s.name+' ==='});
+    if(s.imgs.design){
+      allContent.push({type:'text',text:EN?'IMAGE A — 2D Master Artwork (approved reference):':'IMAGEN A — Diseño 2D master (referencia aprobada):'});
+      allContent.push({type:'image',source:{type:'base64',media_type:'image/png',data:s.imgs.design.split(',')[1]}});
+    }
+    if(s.imgs.injected){
+      allContent.push({type:'text',text:EN?'IMAGE B — Raw Injected Sample (evaluate fidelity vs A):':'IMAGEN B — Pieza inyectada en bruto (evaluar fidelidad vs A):'});
+      allContent.push({type:'image',source:{type:'base64',media_type:'image/png',data:s.imgs.injected.split(',')[1]}});
+    }
+    if(!s.imgs.injected&&s.imgs.final){
+      allContent.push({type:'text',text:EN?'IMAGE B — Final Finished Part (evaluate fidelity vs A):':'IMAGEN B — Pieza final terminada (evaluar fidelidad vs A):'});
+      allContent.push({type:'image',source:{type:'base64',media_type:'image/png',data:s.imgs.final.split(',')[1]}});
+    }
+    if(s.imgs.mold){
+      allContent.push({type:'text',text:EN?'IMAGE C — Mold (intentionally mirror-inverted vs 2D — correct by design, adds 3D volumetry):':'IMAGEN C — Molde (espejado respecto al 2D — correcto por diseño, agrega volumetría 3D):'});
+      allContent.push({type:'image',source:{type:'base64',media_type:'image/png',data:s.imgs.mold.split(',')[1]}});
+    }
+    if(s.imgs.render1){
+      allContent.push({type:'text',text:EN?'IMAGE D — 3D Render view 1 (volumetry reference):':'IMAGEN D — Render 3D vista 1 (referencia volumetría):'});
+      allContent.push({type:'image',source:{type:'base64',media_type:'image/png',data:s.imgs.render1.split(',')[1]}});
+    }
+    if(s.imgs.render2){
+      allContent.push({type:'text',text:EN?'IMAGE E — 3D Render view 2 (volumetry reference):':'IMAGEN E — Render 3D vista 2 (referencia volumetría):'});
+      allContent.push({type:'image',source:{type:'base64',media_type:'image/png',data:s.imgs.render2.split(',')[1]}});
+    }
+    if(s.imgs.injected&&s.imgs.final){
+      allContent.push({type:'text',text:EN?'IMAGE F — Final Finished Part (post-production):':'IMAGEN F — Pieza final terminada (post-producción):'});
+      allContent.push({type:'image',source:{type:'base64',media_type:'image/png',data:s.imgs.final.split(',')[1]}});
+    }
+    var orientMap=EN?
+      {ok:'CORRECT (inspector-verified)',mirrored:'MIRRORED — CRITICAL DEFECT (inspector-verified)',unchecked:'not verified by inspector'}:
+      {ok:'CORRECTA (verificada por inspector)',mirrored:'ESPEJADA — DEFECTO CRÍTICO (verificado por inspector)',unchecked:'sin verificar por inspector'};
+    allContent.push({type:'text',text:(EN?'Inspector orientation: ':'Orientación inspector: ')+(orientMap[s.orientation]||orientMap.unchecked)});
   });
-  content.push({type:'text',text:prompt});
+
+  // Build prompt lines array to avoid literal newline issues
+  var secSummary=sections.map(function(s,i){
+    var avail=[];
+    if(s.imgs.design)avail.push(EN?'2D Artwork':'Diseño 2D');
+    if(s.imgs.mold)avail.push(EN?'Mold':'Molde');
+    if(s.imgs.render1)avail.push('Render 1');
+    if(s.imgs.render2)avail.push('Render 2');
+    if(s.imgs.injected)avail.push(EN?'Injected':'Inyectado');
+    if(s.imgs.final)avail.push(EN?'Final':'Final');
+    var orientMap=EN?
+      {ok:'orientation OK',mirrored:'MIRRORED (critical)',unchecked:'orientation not checked'}:
+      {ok:'orientación OK',mirrored:'ESPEJADA (crítico)',unchecked:'orientación sin verificar'};
+    return (i+1)+'. '+s.name+' ['+avail.join(', ')+'] — '+(orientMap[s.orientation]||orientMap.unchecked);
+  }).join(' | ');
+
+  var pLines=EN?[
+    'You are a zamak injection visual QC expert at APHOLOS, specialized in badges and medals.',
+    'Product: '+gv('f-ref')+' — '+gv('f-desc')+' | Mold: '+gv('f-molde')+' | Order: '+gv('f-op'),
+    'Sections: '+secSummary,
+    '',
+    'CONTEXT:',
+    '- IMAGE A = approved 2D master artwork (flat/2D). PRIMARY reference.',
+    '- IMAGE B = raw injected preproduction sample. Evaluate its fidelity to Image A.',
+    '- IMAGE C = mold (intentionally mirror-inverted — correct by design). Mold adds 3D volumetry — depth differences between 2D and part are NOT defects.',
+    '- IMAGES D/E = 3D renders (volumetry reference for final part appearance).',
+    '- IMAGE F = final finished part (post-production reference).',
+    '- The injected sample is raw/unfinished: surface roughness, material marks, dust, non-final color/texture are NORMAL for preproduction zamak. Do NOT fail for these.',
+    '',
+    'ORIENTATION RULE — CRITICAL:',
+    'The injected part MUST have the SAME orientation as the 2D artwork.',
+    'If the part is mirrored, flipped, or rotated vs the 2D → FAIL.',
+    'Inspector orientation check is provided above — treat it as confirmed data, do not re-analyze visually.',
+    '',
+    'FAIL CONDITIONS:',
+    '- Part mirrored/flipped/rotated vs 2D artwork',
+    '- Missing letter, word, logo, symbol, number, accent, or punctuation',
+    '- Incorrect typography or logo',
+    '- Missing main design element',
+    '- Incorrect composition or position of main elements',
+    '- Major deformation or incorrect outer contour',
+    '- Unreadable text',
+    '- Weak mold definition or incomplete filling compromising the design',
+    '',
+    'If mold image is missing: skip 2D→Mold comparison, state "mold not available".',
+    'If no injected image: skip that comparison.',
+    '',
+    'ANALYSIS — for each section provide:',
+    '1. ORIENTATION: confirmed result',
+    '2. 2D → Injected/Final: fidelity check — typography letter by letter, fine details, proportions, composition',
+    '3. Mold → Injected (if mold available): reproduction quality, missing details, deformations, flash/burrs',
+    '4. Render → Final (if render available): volumetry and depth fidelity',
+    '5. Surface defects: flash/burrs, sink marks, bubbles, scratches',
+    '6. Section verdict: APPROVED / APPROVED WITH OBSERVATIONS (list each) / REJECTED (exact reason)',
+    '',
+    'Be SPECIFIC: name exact problems found.',
+    'Example: "Letter R in APHOLOS deformed", "star detail missing left side", "0.5mm flash on right edge".',
+    '',
+    'End with OVERALL VERDICT: APPROVED / APPROVED WITH OBSERVATIONS / REJECTED'
+  ]:[
+    'Sos experto en control de calidad visual de zamak inyectado en APHOLOS, especializado en insignias y medallas.',
+    'Producto: '+gv('f-ref')+' — '+gv('f-desc')+' | Molde: '+gv('f-molde')+' | Orden: '+gv('f-op'),
+    'Secciones: '+secSummary,
+    '',
+    'CONTEXTO:',
+    '- IMAGEN A = diseño 2D master aprobado (plano/2D). Referencia PRINCIPAL.',
+    '- IMAGEN B = pieza inyectada en bruto (preproducción). Evaluar su fidelidad respecto a Imagen A.',
+    '- IMAGEN C = molde (intencionalmente espejado — correcto por diseño). El molde agrega volumetría 3D — las diferencias de profundidad entre el 2D y la pieza NO son defectos.',
+    '- IMÁGENES D/E = renders 3D (referencia de volumetría para apariencia final).',
+    '- IMAGEN F = pieza final terminada (referencia post-producción).',
+    '- La pieza inyectada es un bruto sin terminar: rugosidad superficial, marcas de material, polvo, color/textura no finales son NORMALES en zamak de preproducción. NO fallar por esto.',
+    '',
+    'REGLA DE ORIENTACIÓN — CRÍTICA:',
+    'La pieza inyectada DEBE tener la MISMA orientación que el diseño 2D.',
+    'Si la pieza está espejada, volteada o rotada respecto al 2D → RECHAZADO.',
+    'La verificación de orientación del inspector se indica arriba — tomarla como dato confirmado, no re-analizar visualmente.',
+    '',
+    'CONDICIONES DE RECHAZO:',
+    '- Pieza espejada/volteada/rotada respecto al 2D',
+    '- Letra, palabra, logo, símbolo, número, tilde o puntuación faltante',
+    '- Tipografía o logo incorrecto',
+    '- Elemento principal del diseño faltante',
+    '- Composición o posición de elementos principales incorrecta',
+    '- Deformación mayor o contorno exterior incorrecto',
+    '- Texto ilegible',
+    '- Definición de molde débil o llenado incompleto que comprometa el diseño',
+    '',
+    'Si falta imagen del molde: omitir comparación 2D→Molde, indicar "molde no disponible".',
+    'Si no hay imagen inyectada: omitir esa comparación.',
+    '',
+    'ANÁLISIS — por cada sección:',
+    '1. ORIENTACIÓN: resultado confirmado',
+    '2. 2D → Inyectado/Final: fidelidad — tipografía letra por letra, detalles finos, proporciones, composición',
+    '3. Molde → Inyectado (si hay molde): calidad de reproducción, detalles faltantes, deformaciones, rebabas',
+    '4. Render → Final (si hay render): fidelidad de volumetría y profundidad',
+    '5. Defectos de superficie: rebabas, rechupes, burbujas, rayaduras',
+    '6. Veredicto de sección: APROBADO / APROBADO CON OBSERVACIONES (listar cada una) / RECHAZADO (motivo exacto)',
+    '',
+    'Sé ESPECÍFICO: nombrá exactamente el problema.',
+    'Ejemplo: "Letra R en APHOLOS deformada", "falta detalle estrella lado izquierdo", "rebaba 0.5mm en borde derecho".',
+    '',
+    'Finalizá con VEREDICTO GLOBAL: APROBADO / APROBADO CON OBSERVACIONES / RECHAZADO'
+  ];
+  var prompt=pLines.join('\n');
+  allContent.push({type:'text',text:prompt});
 
   try{
-    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,messages:[{role:'user',content:content}]})});
+    var res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:2000,messages:[{role:'user',content:allContent}]})
+    });
     var data=await res.json();
-    if(data.error){box.innerHTML='<div class="ai-hd"><i class="ti ti-alert-triangle" style="font-size:14px;color:#c8391a;"></i><span style="font-size:12px;font-weight:600;">Error API</span></div><div class="ai-body" style="color:#c8391a;">'+data.error.message+'</div>';return;}
-    var txt=(data.content||[]).map(function(c){return c.text||'';}).join('\n')||'Sin respuesta.';
+    if(data.error){
+      box.innerHTML='<div class="ai-hd"><i class="ti ti-alert-triangle" style="font-size:14px;color:#c8391a;"></i>'+
+        '<span style="font-size:12px;font-weight:600;">'+(EN?'API Error':'Error API')+'</span></div>'+
+        '<div class="ai-body" style="color:#c8391a;">'+data.error.message+'</div>';
+      return;
+    }
+    var txt=(data.content||[]).map(function(c){return c.text||'';}).join('');
     lastAI=txt;
-    var html=txt.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'</p><p style="margin-top:7px">').replace(/\n/g,'<br/>');
-    box.innerHTML='<div class="ai-hd"><i class="ti ti-sparkles" style="font-size:14px;color:#888;"></i><span style="font-size:12px;font-weight:600;">'+(lang==='en'?'Analysis complete':'Análisis completado')+'</span><span class="ai-tag">Claude IA</span></div><div class="ai-body"><p>'+html+'</p></div>';
-    var tl=txt.toLowerCase(),vb=document.getElementById('verd-box');
-    if(tl.includes('rechazado')||tl.includes('rejected')){lastVerdict='rejected';vb.innerHTML='<div class="verd v-err"><i class="ti ti-x" style="font-size:20px;"></i><div><div class="vt">'+(lang==='en'?'Rejected':'Rechazado')+'</div></div></div>';}
-    else if(tl.includes('observaciones')||tl.includes('observations')){lastVerdict='observations';vb.innerHTML='<div class="verd v-warn"><i class="ti ti-alert-triangle" style="font-size:20px;"></i><div><div class="vt">'+(lang==='en'?'Approved with observations':'Aprobado con observaciones')+'</div></div></div>';}
-    else if(tl.includes('aprobado')||tl.includes('approved')){lastVerdict='approved';vb.innerHTML='<div class="verd v-ok"><i class="ti ti-circle-check" style="font-size:20px;"></i><div><div class="vt">'+(lang==='en'?'Approved':'Aprobado')+'</div></div></div>';}
+    var html=txt.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').split('\n\n').join('</p><p style="margin-top:7px">').split('\n').join('<br/>');
+    box.innerHTML='<div class="ai-hd"><i class="ti ti-sparkles" style="font-size:14px;color:#888;"></i>'+
+      '<span style="font-size:12px;font-weight:600;">'+(EN?'Analysis complete':'Análisis completado')+'</span>'+
+      '<span class="ai-tag">Claude IA</span></div>'+
+      '<div class="ai-body"><p>'+html+'</p></div>';
+    var tl=txt.toLowerCase();
+    var vb=document.getElementById('verd-box');
+    if(tl.includes('rechazado')||tl.includes('rejected')){
+      lastVerdict='rejected';
+      vb.innerHTML='<div class="verd v-err"><i class="ti ti-x" style="font-size:20px;"></i><div>'+
+        '<div class="vt">'+(EN?'Rejected':'Rechazado')+'</div>'+
+        '<div class="vs">'+(EN?'Does not meet quality criteria':'No cumple los criterios de calidad')+'</div></div></div>';
+    }else if(tl.includes('observaciones')||tl.includes('observations')){
+      lastVerdict='observations';
+      vb.innerHTML='<div class="verd v-warn"><i class="ti ti-alert-triangle" style="font-size:20px;"></i><div>'+
+        '<div class="vt">'+(EN?'Approved with observations':'Aprobado con observaciones')+'</div>'+
+        '<div class="vs">'+(EN?'Review indicated points':'Revisar los puntos indicados')+'</div></div></div>';
+    }else if(tl.includes('aprobado')||tl.includes('approved')){
+      lastVerdict='approved';
+      vb.innerHTML='<div class="verd v-ok"><i class="ti ti-circle-check" style="font-size:20px;"></i><div>'+
+        '<div class="vt">'+(EN?'Approved':'Aprobado')+'</div>'+
+        '<div class="vs">'+(EN?'Meets quality criteria':'Cumple los criterios de calidad')+'</div></div></div>';
+    }else{
+      lastVerdict='';
+    }
     updMetrics();
-  }catch(err){box.innerHTML='<div class="ai-hd"><i class="ti ti-alert-triangle" style="font-size:14px;color:#c8391a;"></i><span style="font-size:12px;font-weight:600;">Error</span></div><div class="ai-body" style="color:#c8391a;">'+err.message+'</div>';}
+  }catch(err){
+    box.innerHTML='<div class="ai-hd"><i class="ti ti-alert-triangle" style="font-size:14px;color:#c8391a;"></i>'+
+      '<span style="font-size:12px;font-weight:600;">'+(EN?'Connection error':'Error de conexión')+'</span></div>'+
+      '<div class="ai-body" style="color:#c8391a;">'+err.message+'</div>';
+  }
 }
 
-// ── REPORT ──
+
 function nroReg(){var f=(document.getElementById('f-fecha')||{value:''}).value.replace(/-/g,'');return 'RC-'+f+'-'+((document.getElementById('f-op')||{value:''}).value||'SIN-OP');}
 function fmtF(v){
   if(!v||v==='—')return '—';
@@ -1682,13 +1860,44 @@ function updReport(){
   document.getElementById('rp-ref').textContent=gv('f-ref');
   document.getElementById('rp-desc').textContent=gv('f-desc');
   var fs=document.getElementById('f-fase');document.getElementById('rp-fase').textContent=fs?fs.options[fs.selectedIndex].text:'—';
-  if(lastAI){var h=lastAI.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br/>');var aiEl=document.getElementById('rp-ai');if(aiEl){aiEl.innerHTML=h;aiEl.style.fontStyle='normal';}}
+  var aiEl=document.getElementById('rp-ai');
+  if(aiEl&&lastAI){
+    var h=typeof lastAI==='string'?lastAI.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').split('\n').join('<br/>'):JSON.stringify(lastAI);
+    aiEl.innerHTML=h;aiEl.style.fontStyle='normal';
+  }
   var vp=document.getElementById('rp-verd');
-  var VM={rejected:'<div class="verd v-err"><i class="ti ti-x" style="font-size:20px;"></i><div><div class="vt">'+(lang==='en'?'Rejected':'Rechazado')+'</div></div></div>',observations:'<div class="verd v-warn"><i class="ti ti-alert-triangle" style="font-size:20px;"></i><div><div class="vt">'+(lang==='en'?'Approved with observations':'Aprobado con observaciones')+'</div></div></div>',approved:'<div class="verd v-ok"><i class="ti ti-circle-check" style="font-size:20px;"></i><div><div class="vt">'+(lang==='en'?'Approved':'Aprobado')+'</div></div></div>'};
+  var VM={rejected:'<div class="verd v-err"><i class="ti ti-x" style="font-size:20px;"></i><div><div class="vt">Rechazado</div></div></div>',observations:'<div class="verd v-warn"><i class="ti ti-alert-triangle" style="font-size:20px;"></i><div><div class="vt">Aprobado con observaciones</div></div></div>',approved:'<div class="verd v-ok"><i class="ti ti-circle-check" style="font-size:20px;"></i><div><div class="vt">Aprobado</div></div></div>'};
   if(vp)vp.innerHTML=VM[lastVerdict]||'';
   var obs=(document.getElementById('obs')||{value:''}).value;
+    // Section verdicts summary
+  var secVerdEl=document.getElementById('rp-sec-verdicts');
+  if(secVerdEl){
+    var EN=lang==='en';
+    var vMap={
+      pass:'<span style="color:#275010;font-weight:600;">'+(EN?'✓ PASS':'✓ PASA')+'</span>',
+      fail:'<span style="color:#c8391a;font-weight:600;">'+(EN?'✗ FAIL':'✗ NO PASA')+'</span>',
+      obs:'<span style="color:#7a4f00;font-weight:600;">'+(EN?'⚠ WITH OBSERVATIONS':'⚠ CON OBSERVACIONES')+'</span>'
+    };
+    var orientMap={
+      ok:'<span style="color:#275010;">✓ '+(EN?'Correct':'Correcta')+'</span>',
+      mirrored:'<span style="color:#c8391a;">⟺ '+(EN?'MIRRORED':'ESPEJADA')+'</span>',
+      unchecked:'<span style="color:#888;">○ '+(EN?'Not verified':'Sin verificar')+'</span>'
+    };
+    var rows=sections.map(function(s,i){
+      return '<div class="rp-row">'+
+        '<span class="k">'+(i+1)+'. '+s.name+'</span>'+
+        '<span class="v" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">'+
+          (orientMap[s.orientation]||orientMap.unchecked)+
+          (vMap[s.verdict]||'<span style="color:#aaa;">—</span>')+
+          (s.observations?'<span style="font-size:10px;color:#555;font-weight:400;">'+s.observations+'</span>':'')+
+        '</span>'+
+      '</div>';
+    }).join('');
+    secVerdEl.innerHTML=rows||'<p style="font-size:12px;color:#aaa;font-style:italic;">'+(EN?'No sections.':'Sin secciones.')+'</p>';
+  }
+
   var oc=document.getElementById('rp-obs-card');var ot=document.getElementById('rp-obs-txt');
-  if(obs&&obs.trim()){if(oc)oc.style.display='block';if(ot)ot.innerHTML=obs.replace(/\n/g,'<br/>');}else{if(oc)oc.style.display='none';}
+  if(obs&&obs.trim()){if(oc)oc.style.display='block';if(ot)ot.innerHTML=obs.split('\n').join('<br/>');}else{if(oc)oc.style.display='none';}
 }
 function cpRp(){
   var txt='APHOLOS — '+(lang==='en'?'QC RECORD':'REGISTRO CQ')+'\nN°: '+nroReg()+'\nRef: '+gv('f-ref')+' | '+gv('f-desc')+'\nMarca: '+gv('f-marca')+' | Cliente: '+gv('f-cliente')+'\nMolde: '+gv('f-molde')+' | OP: '+gv('f-op')+'\nInspector: '+gv('f-inspector')+'\n\nSECCIONES:\n'+sections.map(function(s,i){return (i+1)+'. '+s.name+' — '+(s.verdict?{pass:'PASA',fail:'NO PASA',obs:'CON OBSERVACIONES'}[s.verdict]:'—')+(s.observations?'\n   Obs: '+s.observations:'');}).join('\n')+'\n\n'+(lang==='en'?'AI ANALYSIS:':'ANÁLISIS IA:')+'\n'+(lastAI||'—');
