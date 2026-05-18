@@ -143,6 +143,12 @@ input[type=checkbox]{width:14px;height:14px;accent-color:#111;cursor:pointer;fle
 .pill.on{background:#111;color:#fff;border-color:#111;}
 
 /* PASA / NO PASA */
+/* Orientation buttons */
+.orient-btn{flex:1;padding:6px 8px;font-size:11px;font-weight:500;border-radius:7px;border:1.5px solid #ccc;background:#fff;cursor:pointer;font-family:inherit;transition:all .15s;text-align:center;}
+.orient-btn:hover{background:#f0ede8;}
+.orient-btn.ok.sel{background:#eaf3de;border-color:#275010;color:#275010;font-weight:600;}
+.orient-btn.mirrored.sel{background:#fdf0ec;border-color:#c8391a;color:#c8391a;font-weight:600;}
+.orient-btn.unchecked.sel{background:#f0ede8;border-color:#888;color:#555;}
 .verdict-row{display:flex;gap:8px;margin-bottom:10px;}
 .verdict-btn{flex:1;padding:10px;font-size:13px;font-weight:600;border-radius:8px;border:2px solid #ccc;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;transition:all .15s;}
 .verdict-btn.pass{border-color:#c0dd97;color:#275010;}
@@ -338,6 +344,10 @@ input[type=checkbox]{width:14px;height:14px;accent-color:#111;cursor:pointer;fle
     <div class="metric"><div class="lbl" id="t-m4">Análisis</div><div class="val" id="m4" style="font-size:12px;padding-top:3px;">Pendiente</div><div class="sub">estado</div></div>
   </div>
   <div style="font-size:12px;font-weight:600;margin-bottom:8px;" id="t-ai-ttl">Análisis IA — todas las secciones</div>
+  <div class="info info-a" style="margin-bottom:10px;">
+    <i class="ti ti-alert-triangle"></i>
+    <span id="t-ai-overlay-hint">Para mejor análisis: antes de ejecutar, andá a <strong>Comparar</strong> y ajustá el overlay de cada sección hasta que los perímetros coincidan. La IA usa esas imágenes alineadas como referencia principal.</span>
+  </div>
   <div class="ai-box" id="ai-box">
     <div class="ai-hd"><i class="ti ti-sparkles" style="font-size:14px;color:#888;"></i><span style="font-size:12px;font-weight:600;" id="t-ai-pend">Análisis pendiente</span><span class="ai-tag">Claude IA</span></div>
     <div class="ai-body" style="font-style:italic;" id="t-ai-hint">Cargá imágenes y ejecutá el análisis.</div>
@@ -472,6 +482,7 @@ function newSection(name){
     },
     editLayer:'design',
     verdict:null, // 'pass','fail','obs'
+    orientation:null, // 'ok','mirrored','unchecked'
     observations:'',
     firma:null // dataURL of signature canvas
   };
@@ -760,6 +771,19 @@ function renderCmpSection(sec){
   obsDiv.innerHTML=
     '<div class="dvd"></div>'+
     '<div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px;">Resultado de la sección</div>'+
+    // Orientation check
+    '<div style="margin-bottom:10px;">'+
+      '<div style="font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;">'+
+        '<i class="ti ti-flip-horizontal" style="font-size:11px;"></i> Verificación de orientación (inspector)</div>'+
+      '<div style="display:flex;gap:6px;">'+
+        '<button class="orient-btn ok'+(sec.orientation==='ok'?' sel':'')+'" onclick="setOrientation(\''+sec.id+'\',\'ok\',this)">'+
+          '✓ Orientación correcta</button>'+
+        '<button class="orient-btn mirrored'+(sec.orientation==='mirrored'?' sel':'')+'" onclick="setOrientation(\''+sec.id+'\',\'mirrored\',this)">'+
+          '⟺ Pieza espejada</button>'+
+        '<button class="orient-btn unchecked'+(!sec.orientation||sec.orientation==='unchecked'?' sel':'')+'" onclick="setOrientation(\''+sec.id+'\',\'unchecked\',this)">'+
+          '○ Sin verificar</button>'+
+      '</div>'+
+    '</div>'+
     // Verdict
     '<div class="verdict-row">'+
       '<button class="verdict-btn pass'+(sec.verdict==='pass'?' sel':'')+'" onclick="setVerdict(\''+sec.id+'\',\'pass\',this)">'+
@@ -831,6 +855,13 @@ function buildEditBtns(sec){
 }
 
 // ── VERDICT ──
+function setOrientation(sid,v,btn){
+  var sec=getSection(sid);if(!sec)return;
+  sec.orientation=v;
+  var row=btn.parentElement;
+  row.querySelectorAll('.orient-btn').forEach(function(b){b.classList.remove('sel');});
+  btn.classList.add('sel');
+}
 function setVerdict(sid,v,btn){
   var sec=getSection(sid);if(!sec)return;
   sec.verdict=v;
@@ -1396,6 +1427,13 @@ function buildPrintHTML(sectionIds){
             '</div>'+
           '</div>'+
         '</div>'+
+        // Orientation
+        (function(){
+          var oMap={ok:'✓ Orientación correcta',mirrored:'⟺ PIEZA ESPEJADA — DEFECTO CRÍTICO',unchecked:'○ Orientación sin verificar'};
+          var oClass={ok:'v-pass',mirrored:'v-fail',unchecked:'v-none'};
+          var ov=sec.orientation||'unchecked';
+          return '<div style="margin-bottom:6px;"><div class="v-btn '+(oClass[ov]||'v-none')+'">'+(oMap[ov]||'○ Sin verificar')+'</div></div>';
+        })()+
         // Verdict
         '<div class="verd-row">'+
           '<div class="v-btn '+verdClass+'">'+verdIcon+' '+verdTxt+'</div>'+
@@ -1528,47 +1566,83 @@ async function doAI(){
     return (i+1)+'. '+s.name+': imágenes=['+imgs.join(',')+'] veredicto='+vdict+(s.observations?' obs="'+s.observations+'"':'');
   }).join('\n');
   var hasRender = sections.some(function(s){return s.imgs.render1||s.imgs.render2;});
+
+  var secDesc = sections.map(function(s,i){
+    var avail=[];
+    if(s.imgs.design)  avail.push('Diseño 2D');
+    if(s.imgs.mold)    avail.push('Molde (espejado)');
+    if(s.imgs.render1) avail.push('Render 1');
+    if(s.imgs.render2) avail.push('Render 2');
+    if(s.imgs.injected)avail.push('Pieza inyectada');
+    if(s.imgs.final)   avail.push('Pieza final terminada');
+    var vdict=s.verdict?{pass:'PASA',fail:'NO PASA',obs:'CON OBSERVACIONES'}[s.verdict]:'sin veredicto inspector';
+    var orientMap={'ok':'CORRECTA ✓','mirrored':'ESPEJADA ✗ (DEFECTO CRÍTICO)','unchecked':'sin verificar'};
+    var orient='Orientación: '+(orientMap[s.orientation]||'sin verificar');
+    var obs=s.observations?(' | obs="'+s.observations+'"'):'';
+    return (i+1)+'. '+s.name+': ['+avail.join(', ')+'] | '+orient+' | veredicto inspector='+vdict+obs;
+  }).join(' / ');
+
   var prompt = lang==='en' ?
     'You are a zamak injection quality control expert at APHOLOS, specialized in badges and medals.\n'+
-    'Product: '+gv('f-ref')+' — '+gv('f-desc')+'\n'+
-    'Mold: '+gv('f-molde')+' | Order: '+gv('f-op')+'\n'+
-    'Sections analyzed:\n'+secDesc+'\n\n'+
-    'IMPORTANT CONTEXT:\n'+
-    '- The 2D design is flat. The mold adds 3D volumetry — this is NOT a defect.\n'+
-    '- The mold IS mirror-inverted by design — evaluate if inversion is correct.\n'+
-    (hasRender?'- 3D renders are available — use them as primary reference for volumetry and final appearance.\n':'')+
-    '- Zamak tolerance: ~0.3mm for general dimensions.\n\n'+
-    'For each section analyze:\n'+
-    '1. 2D Design → Mold: Did the mold correctly copy the 2D? Check typography letter by letter, fine details, proportions. Note the mold must be mirror-inverted.\n'+
-    '2. Mold → Injected part: Did injection correctly reproduce the mold? Check missing details, deformations, flash/burrs.\n'+
-    '3. 2D/Render → Final part: Overall fidelity. If render available, prioritize render comparison.\n'+
-    '4. Specific defects: missing/wrong letters, deformed typography, missing details, dimensional failures, surface defects (bubbles, scratches, sink marks).\n\n'+
-    'Be SPECIFIC: name exact problems found (e.g. "letter A missing in APHOLOS", "star detail not transferred to mold", "left side shows 0.5mm flash").\n'+
-    'PROPOSED VERDICT: APPROVED / APPROVED WITH OBSERVATIONS (list each) / REJECTED (state reason).'
+    'Product: '+gv('f-ref')+' — '+gv('f-desc')+' | Mold: '+gv('f-molde')+' | Order: '+gv('f-op')+'\n'+
+    'Sections: '+secDesc+'\n\n'+
+    '=== MANDATORY ORIENTATION VERIFICATION (DO THIS FIRST) ===\n'+
+    'Pick ONE asymmetric element in the design (e.g. a figure raising its RIGHT arm, text reading left-to-right, a logo facing right).\n'+
+    'Step 1: In the 2D design, describe the position of that element (e.g. "mermaid raises RIGHT arm").\n'+
+    'Step 2: In the injected/final part, describe the same element (e.g. "mermaid raises LEFT arm").\n'+
+    'Step 3: If they differ → THE PART IS MIRROR-INVERTED = CRITICAL DEFECT. State: "CRITICAL: Part is mirror-inverted vs 2D design."\n'+
+    'Step 4: If they match → orientation is correct.\n'+
+    'DO NOT skip this check. DO NOT assume orientation is correct without explicitly comparing.\n\n'+
+    '=== MOLD RULES ===\n'+
+    'The mold IS intentionally mirror-inverted vs the 2D — this is CORRECT and expected.\n'+
+    'The injected part comes OUT of the mold already flipped back → it MUST match the 2D orientation.\n'+
+    'The 2D is flat — mold adds 3D depth/volumetry — depth differences are NOT defects.\n'+
+    (hasRender?'3D renders available — use as primary reference for volumetry and final part appearance.\n':'')+
+    'If mold image is missing: skip 2D→Mold comparison, state "mold not available".\n\n'+
+    'ANALYSIS (only for available image pairs):\n'+
+    '1. ORIENTATION (mandatory, see above)\n'+
+    '2. Typography: every letter — missing, deformed, wrong spacing?\n'+
+    '3. Fine details: all design elements present in mold and injected part?\n'+
+    '4. Perimeter fidelity: overall shape match?\n'+
+    '5. Surface defects: flash/burrs, sink marks, bubbles, scratches\n'+
+    (hasRender?'6. Volumetry: render vs final part depth and relief\n':'')+
+    'Be SPECIFIC: name exact problems ("mermaid tail fin detail missing", "letter A deformed in APHOLOS").\n'+
+    'PROPOSED VERDICT: APPROVED / APPROVED WITH OBSERVATIONS (list each) / REJECTED (state exact reason).'
     :
     'Sos experto en control de calidad de piezas de zamak inyectado en APHOLOS, especializado en insignias y medallas.\n'+
-    'Producto: '+gv('f-ref')+' — '+gv('f-desc')+'\n'+
-    'Molde: '+gv('f-molde')+' | Orden: '+gv('f-op')+'\n'+
-    'Secciones analizadas:\n'+secDesc+'\n\n'+
-    'CONTEXTO IMPORTANTE:\n'+
-    '- El diseño 2D es plano. El molde agrega volumetría 3D — esto NO es un defecto.\n'+
-    '- El molde ES una imagen espejada por diseño — evaluá si el espejado fue correctamente aplicado.\n'+
-    (hasRender?'- Hay renders 3D disponibles — usarlos como referencia principal para volumetría y apariencia final.\n':'')+
-    '- Tolerancia zamak: ~0.3mm para medidas generales.\n\n'+
-    'Por cada sección analizá:\n'+
-    '1. Diseño 2D → Molde: ¿El molde copió correctamente el 2D? Verificá tipografía letra por letra, detalles finos, proporciones. El molde debe ser espejo del 2D.\n'+
-    '2. Molde → Pieza inyectada: ¿La inyección reprodujo correctamente el molde? Fijate en detalles faltantes, deformaciones, rebabas.\n'+
-    '3. Diseño 2D / Render → Pieza final: Fidelidad general. Si hay render disponible, priorizá esa comparación.\n'+
-    '4. Defectos específicos: letras faltantes o incorrectas, tipografía deformada, detalles no transferidos, fallas dimensionales, defectos de superficie (burbujas, rayaduras, rechupes).\n\n'+
-    'Sé ESPECÍFICO: nombrá exactamente el problema encontrado (ej: "falta la letra A en APHOLOS", "el detalle de la estrella no se transfirió al molde", "rebaba de 0.5mm en lado izquierdo").\n'+
-    'VEREDICTO PROPUESTO: APROBADO / APROBADO CON OBSERVACIONES (listá cada una) / RECHAZADO (indicá motivo).';
+    'Producto: '+gv('f-ref')+' — '+gv('f-desc')+' | Molde: '+gv('f-molde')+' | Orden: '+gv('f-op')+'\n'+
+    'Secciones: '+secDesc+'\n\n'+
+    '=== ORIENTACIÓN (VERIFICADA POR EL INSPECTOR) ===\n'+
+    'El inspector verificó manualmente la orientación. Ver datos en descripción de secciones.\n'+
+    'Si orientación = ESPEJADA → defecto crítico confirmado → RECHAZADO.\n'+
+    'Si orientación = CORRECTA → tomar como confirmada, no re-analizar.\n'+
+    'Si orientación = sin verificar → indicar que falta verificación manual.\n\n'+
+    '=== REGLAS DEL MOLDE ===\n'+
+    'El molde ES intencionalmente espejado respecto al 2D — esto es CORRECTO y esperado.\n'+
+    'La pieza inyectada sale del molde ya invertida → DEBE coincidir con la orientación del 2D.\n'+
+    'El 2D es plano — el molde agrega profundidad/volumetría 3D — las diferencias de relieve NO son defectos.\n'+
+    (hasRender?'Hay renders 3D disponibles — usarlos como referencia principal de volumetría y apariencia final.\n':'')+
+    'Si falta imagen del molde: omitir comparación 2D→Molde, indicar "molde no disponible".\n\n'+
+    'ANÁLISIS (solo para pares de imágenes disponibles):\n'+
+    '1. ORIENTACIÓN (obligatorio, ver arriba)\n'+
+    '2. Tipografía: cada letra — ¿falta alguna, está deformada, espaciado incorrecto?\n'+
+    '3. Detalles finos: ¿todos los elementos del diseño están presentes en molde y pieza inyectada?\n'+
+    '4. Fidelidad de perímetro: ¿la forma general coincide?\n'+
+    '5. Defectos de superficie: rebabas, rechupes, burbujas, rayaduras\n'+
+    (hasRender?'6. Volumetría: ¿el render coincide con la profundidad y relieve de la pieza final?\n':'')+
+    'Sé ESPECÍFICO: nombrá exactamente el problema ("falta detalle de aleta de la cola de la sirena", "letra A deformada en APHOLOS").\n'+
+    'VEREDICTO PROPUESTO: APROBADO / APROBADO CON OBSERVACIONES (listá cada una) / RECHAZADO (indicá motivo exacto).';
 
-  // Build content array with all images in logical order
+  // Send individual images only - overlay merges them and confuses orientation analysis
+  // Order: design first, then injected/final so Claude can compare them directly
   var content=[];
-  var imgOrder=['design','render1','render2','mold','injected','final'];
-  sections.forEach(function(s){
+  sections.forEach(function(s,si){
+    // Label each image with section name and type via text block
+    var imgOrder=['design','mold','render1','render2','injected','final'];
     imgOrder.forEach(function(k){
       if(s.imgs[k]){
+        // Add text label before each image so Claude knows what it is
+        content.push({type:'text',text:'Sección '+(si+1)+' - '+s.name+' | Imagen: '+NMS[k]+':'});
         var b64=s.imgs[k].split(',')[1];
         if(b64)content.push({type:'image',source:{type:'base64',media_type:'image/png',data:b64}});
       }
@@ -1577,7 +1651,7 @@ async function doAI(){
   content.push({type:'text',text:prompt});
 
   try{
-    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:content}]})});
+    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,messages:[{role:'user',content:content}]})});
     var data=await res.json();
     if(data.error){box.innerHTML='<div class="ai-hd"><i class="ti ti-alert-triangle" style="font-size:14px;color:#c8391a;"></i><span style="font-size:12px;font-weight:600;">Error API</span></div><div class="ai-body" style="color:#c8391a;">'+data.error.message+'</div>';return;}
     var txt=(data.content||[]).map(function(c){return c.text||'';}).join('\n')||'Sin respuesta.';
