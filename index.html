@@ -1874,6 +1874,13 @@ async function runAI(){
         messages:[{role:'user',content:content}]
       })
     });
+    if(!resp.ok){
+      var errBody = await resp.text();
+      document.getElementById('ai-output').innerHTML='<span style="color:var(--red)">Error HTTP '+resp.status+': '+errBody.slice(0,300)+'</span>';
+      document.getElementById('btn-ai').disabled=false;
+      document.getElementById('btn-ai2').disabled=false;
+      return;
+    }
     var data = await resp.json();
     var text = (data.content||[]).map(function(c){return c.text||'';}).join('');
     var clean = text.replace(/```json|```/g,'').trim();
