@@ -2424,9 +2424,11 @@ function drawDiffOverlay(sec){
   if(!refKey||!cmpKey||!sec.imgObjs[refKey]||!sec.imgObjs[cmpKey]) return;
 
   var W=canvas.width, H=canvas.height;
+  if(W<=0||H<=0) return;
 
   // Render layer to offscreen at canvas size, always using original image
   function renderTo(key){
+    if(W<=0||H<=0) return null;
     var oc=document.createElement('canvas'); oc.width=W; oc.height=H;
     var c2=oc.getContext('2d');
     var img=sec.imgObjs[key], l=sec.ls[key];
