@@ -1842,17 +1842,9 @@ async function runAI(){
   })();
 
   try {
-    // Use API key from input or localStorage
-    var apiKey = '';
-    var keyInput = document.getElementById('anthropic-api-key');
-    if(keyInput) apiKey = keyInput.value.trim();
-    if(!apiKey){ try{ apiKey = localStorage.getItem('qc_anthropic_key')||''; }catch(e){} }
-    var fetchHeaders = {'Content-Type':'application/json'};
-    if(apiKey) fetchHeaders['x-api-key'] = apiKey;
-
     var resp = await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers: fetchHeaders,
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-6',
         max_tokens:1000,
