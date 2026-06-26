@@ -1869,7 +1869,7 @@ async function runAI(){
       },
       body:JSON.stringify({
         model:'claude-sonnet-4-6',
-        max_tokens:1000,
+        max_tokens:4000,
         system:sysPrompt,
         messages:[{role:'user',content:content}]
       })
@@ -1884,7 +1884,29 @@ async function runAI(){
     var data = await resp.json();
     var text = (data.content||[]).map(function(c){return c.text||'';}).join('');
     var clean = text.replace(/```json|```/g,'').trim();
-    var result = JSON.parse(clean);
+    // Try to extract valid JSON even if truncated
+    var result;
+    try {
+      result = JSON.parse(clean);
+    } catch(parseErr) {
+      // Try to fix truncated JSON by finding last complete field
+      var fixedJson = clean;
+      // Close any open arrays/objects
+      var opens = (clean.match(/\{/g)||[]).length - (clean.match(/\}/g)||[]).length;
+      var openArr = (clean.match(/\[/g)||[]).length - (clean.match(/\]/g)||[]).length;
+      // Remove incomplete last entry
+      fixedJson = clean.replace(/,\s*\{[^{}]*$/, '');
+      fixedJson = fixedJson.replace(/,\s*"[^"]*":\s*"[^"]*$/, '');
+      for(var ai=0;ai<openArr;ai++) fixedJson += ']';
+      for(var oi=0;oi<opens;oi++) fixedJson += '}';
+      try { result = JSON.parse(fixedJson); }
+      catch(e2) { 
+        // Last resort: extract what we can
+        result = { verdict:'NEEDS_REVIEW', confidence:'Low', 
+          summary: 'Análisis incompleto — aumentá max_tokens. Respuesta parcial recibida.',
+          issues:[], recommendation: text.slice(0,500) };
+      }
+    }
     renderAIResult(result);
     if(activeSec){
       activeSec.verdict = result.verdict==='PASS'?'pass':result.verdict==='FAIL'?'fail':'obs';
