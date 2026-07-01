@@ -750,9 +750,6 @@ function startApp(){
     }
   }
   loadApiKey();
-  // Resize canvas AFTER app is visible so clientWidth/Height are correct
-  setTimeout(resizeCanvas, 100);
-  setTimeout(resizeCanvas, 300); // second call in case layout takes longer
 }
 
 function goToSetup(){
@@ -879,7 +876,11 @@ function updateSessionUI(){
   });
   // Render checklist and observations
   setTimeout(renderChecklist, 10);
-  setTimeout(loadObs, 10);
+  setTimeout(function(){
+    var sd2=getSD();
+    var el=document.getElementById('sess-obs');
+    if(el) el.value=(sd2&&sd2.obs)||'';
+  }, 10);
   // Re-apply translations for dynamically shown elements
   setTimeout(applyTranslations, 20);
 
@@ -964,10 +965,11 @@ function resizeCanvas(){
   var w = wrap.clientWidth;
   var h = wrap.clientHeight;
   if(w < 10 || h < 10) return;
+  // Set canvas logical size = CSS size (no DPR scaling to keep it simple)
+  canvas.style.width = '';
+  canvas.style.height = '';
   canvas.width = w;
   canvas.height = h;
-  canvas.style.width = w + 'px';
-  canvas.style.height = h + 'px';
   fitToCanvas();
 }
 
@@ -1535,9 +1537,10 @@ function fitToCanvas(){
   var fit=Math.min(availW/img.width, H/img.height)*0.92;
   if(!fit||isNaN(fit)||fit<=0) fit=1;
   viewZoom=fit; viewPanX=0; viewPanY=0;
-  // Always sync canvas pixel AND CSS size
-  canvas.width=W; canvas.height=H;
-  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  // Make sure canvas matches wrap
+  if(canvas.width!==W||canvas.height!==H){
+    canvas.width=W; canvas.height=H;
+  }
   draw();
 }
 
